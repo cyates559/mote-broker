@@ -1,0 +1,122 @@
+from collections import defaultdict
+from functools import cached_property
+from multiprocessing import Process, Condition, Lock, Manager
+
+import os
+
+from asgiref.sync import sync_to_async
+
+
+def RecursiveDefaultDict():
+    return defaultdict(RecursiveDefaultDict)
+
+
+class PersistenceManager:
+    def __init__(self):
+        self.condition = Condition(lock=Lock())
+        self.running = Manager().list([False])
+        self.events = Manager().list()
+        self.process = Process(
+            target=loop, args=(self.running, self.condition, self.events)
+        )
+
+    @classmethod
+    async def get_tree_async(cls):
+        return await sync_to_async(cls.get_tree, thread_sensitive=False)()
+
+    @staticmethod
+    def get_tree() -> defaultdict:
+        import django
+
+        os.environ["DJANGO_SETTINGS_MODULE"] = "db.settings"
+        django.setup()
+        from persistence.models import Message
+
+        results = RecursiveDefaultDict()
+        for message in Message.objects.all():
+            split_topic = message.topic.split("/")
+            pointer = results
+            for node in split_topic:
+                if node != "":
+                    pointer = pointer[node]
+            pointer["/"] = message
+        return results
+
+    def clear(self, topic: str):
+        topic = self.parse_topic(topic)
+        with self.condition:
+            self.events.append((topic, None, 0))
+            self.condition.notify()
+
+    def retain(self, topic: str, message: bytes, qos: int):
+        topic = self.parse_topic(topic)
+        with self.condition:
+            self.events.append((topic, message, qos))
+            self.condition.notify()
+
+    @staticmethod
+    def parse_topic(topic: str) -> str:
+        parsed = topic.replace("//", "/")
+        return parsed
+
+    @cached_property
+    def name(self):
+        return self.__class__.__name__
+
+    def run(self):
+        print(f"Stopping {self.name}...", end="")
+        self.running[0] = True
+        self.process.start()
+        print("Done")
+
+    def stop(self):
+        print(f"Stopping {self.name}...", end="")
+        self.running[0] = False
+        with self.condition:
+            self.condition.notify()
+        self.process.join()
+        print("Done")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+
+    __enter__ = run
+
+
+def loop(running, condition, events):
+    try:
+        import django
+        os.environ["DJANGO_SETTINGS_MODULE"] = "db.settings"
+        django.setup()
+        from persistence.models import Message
+        while running[0]:
+            with condition:
+                condition.wait_for(lambda: events or not running[0])
+                consumed = list(events)
+                while events:
+                    events.pop()
+            delete_list = []
+            create_list = []
+            for topic, data, qos in consumed:
+                if data is None:
+                    delete_list.append(topic)
+                else:
+                    create_list.append(
+                        Message(
+                            topic=topic,
+                            data=data,
+                            qos=qos,
+                        )
+                    )
+            if delete_list:
+                queryset = Message.objects.filter(topic__in=delete_list)
+                count, _ = queryset.delete()
+            if create_list:
+                Message.objects.bulk_create(
+                    create_list,
+                    update_conflicts=True,
+                    unique_fields=["topic"],
+                    update_fields=["data", "qos"]
+                )
+    except KeyboardInterrupt:
+        pass
