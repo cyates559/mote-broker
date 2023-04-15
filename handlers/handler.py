@@ -196,35 +196,10 @@ class Handler(Client, ReaderWriter):
     async def handle_ping_request(self, _: PingRequestPacket):
         await PingResponsePacket().write(self)
 
-    async def handle_subscribe(self, packet: SubscribePacket):
-        response_codes = []
-        for request in packet.requests:
-            if request.topic[0] == TOPIC_SEP:
-                sync = True
-                topic_str = request.topic[1:]
-            else:
-                sync = False
-                topic_str = request.topic
-            if await Broker.instance.handle_subscribe(
-                client=self,
-                topic_str=topic_str,
-                qos=request.qos,
-                sync=sync,
-            ):
-                response_codes.append(request.qos)
-                self.subscriptions.add(topic_str)
-            else:
-                response_codes.append(0x80)
-        response = SubscribeAcknowledgePacket(
-            id=packet.id,
-            response_codes=response_codes,
-        )
-        await response.write(self)
-
     @staticmethod
     async def publish(packet: PublishPacket):
         message = IncomingMessage.from_packet(packet)
-        await Broker.instance.handle_publish(message)
+        await Broker.instance.publish(message)
 
     async def handle_publish_qos_1(self, packet: PublishPacket):
         acknowledge = PublishAcknowledgePacket(id=packet.id)
@@ -249,9 +224,34 @@ class Handler(Client, ReaderWriter):
         finally:
             self.used_ids.remove(packet.id)
 
+    async def handle_subscribe(self, packet: SubscribePacket):
+        response_codes = []
+        for request in packet.requests:
+            if request.topic[0] == TOPIC_SEP:
+                sync = True
+                topic_str = request.topic[1:]
+            else:
+                sync = False
+                topic_str = request.topic
+            if await Broker.instance.subscribe(
+                client=self,
+                topic_str=topic_str,
+                qos=request.qos,
+                sync=sync,
+            ):
+                response_codes.append(request.qos)
+                self.subscriptions.add(topic_str)
+            else:
+                response_codes.append(0x80)
+        response = SubscribeAcknowledgePacket(
+            id=packet.id,
+            response_codes=response_codes,
+        )
+        await response.write(self)
+
     async def handle_unsubscribe(self, packet: UnsubscribePacket):
         for topic in packet.topics:
-            if await Broker.instance.handle_unsubscribe(
+            if await Broker.instance.unsubscribe(
                 client=self,
                 topic_str=topic,
             ):
@@ -260,11 +260,10 @@ class Handler(Client, ReaderWriter):
                 await response.write(self)
 
     async def handle_disconnected(self):
-        for topic in self.subscriptions:
-            await Broker.instance.handle_unsubscribe(self, topic)
+        await Broker.instance.unsubscribe(self, *self.subscriptions)
         Broker.instance.remove_client(self)
         if self.last_will is not None:
-            await Broker.instance.handle_publish(self.last_will)
+            await Broker.instance.publish(self.last_will)
 
     @cached_property
     def packet_map(self):
