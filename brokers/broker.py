@@ -106,7 +106,7 @@ class Broker:
     def run(self):
         try:
             self.main_task = ensure_future(
-                self.create_context(self.main),
+                self.main(),
                 loop=self.event_loop,
             )
             self.event_loop.run_forever()
@@ -121,8 +121,10 @@ class Broker:
 
     async def main(self):
         try:
+            log.info("Loading message tree...", end="")
             self.tree = await self.load_tree()
-            await self.main_loop()
+            log.info("Done")
+            await self.create_context(self.main_loop)
         except CancelledError:
             raise
         except:
