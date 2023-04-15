@@ -155,7 +155,7 @@ class Handler(Client, ReaderWriter):
         handler = cls(*args, **kwargs)
         try:
             await handler.handle_connect()
-        except TimeoutError as x:
+        except TimeoutError:
             log.info(f"Connection timed out for {handler}")
         except Disconnected as x:
             log.info(x)
