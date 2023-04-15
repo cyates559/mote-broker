@@ -1,3 +1,4 @@
+from logger import log
 from models.constants import LEAF_KEY, EVERYTHING_CARD, ALL_CARD
 from protocols.exceptions import InvalidEverythingCard
 from protocols.is_node_static import is_node_static
@@ -13,6 +14,8 @@ def get_everything_as_rows(topic: list, data: bytes, qos: int, tree: TreeItem, s
     for key, val in tree.items():
         if key == LEAF_KEY and not start:
             result.append((topic, data, qos))
+        elif val is None:
+            log.error("branch is null", topic, data)
         else:
             branch_rows = get_everything_as_rows(
                 topic=topic + [key], data=data, qos=qos, tree=val, start=False,
@@ -25,7 +28,6 @@ def get_applicable_rows(topic: list, data: bytes, qos: int, base: list, tree: Tr
     """
     Parse an incoming message into one or more rows with matching
     payloads; Topics are cherry-picked from a retained tree
-
     """
     node = topic[0]
     next_topic = topic[1:]
