@@ -44,8 +44,6 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
         else:
             rows_by_current_node[node].append(row)
 
-    print("LEEFS", leaf_rows, rows_by_current_node)
-
     messages = []
     for filter_node, branch in subscriptions.items():
         if filter_node == LEAF_KEY:
