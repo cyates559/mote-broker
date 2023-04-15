@@ -44,10 +44,6 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
         else:
             rows_by_current_node[node].append(row)
     messages = []
-    print("A", subscriptions.keys())
-    print("A", rows)
-    print("A", base)
-    print("A", subscriptions.keys())
     for filter_node, branch in subscriptions.items():
         if filter_node == LEAF_KEY:
             response_data = build_message_data(
