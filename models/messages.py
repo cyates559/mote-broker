@@ -75,7 +75,7 @@ class IncomingMessage:
         for node in self.topic.node_list:
             if not is_node_static(node):
                 raise DynamicMessageError
-        return TOPIC_SEP.join(self.topic.node_list)
+        return [(self.topic.node_list, self.data, self.qos)]
 
     @classmethod
     def last_will(cls, packet: ConnectPacket):
