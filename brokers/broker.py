@@ -128,7 +128,6 @@ class Broker:
                     raise rows
             else:
                 rows = message.get_applicable_rows(self.tree)
-            print("RETAYN", rows)
             self.retain_rows(rows)
         else:
             rows = [message.as_single_row()]
