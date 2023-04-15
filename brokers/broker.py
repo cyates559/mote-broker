@@ -110,7 +110,9 @@ class Broker:
         while True:
             rows = await self.broadcast_queue.get()
             if rows:
+                print("OASNUTHEONSTHUSNOTHE")
                 await self.subscription_lock.acquire()
+                print("GOT IT")
                 try:
                     await self.process_rows(rows)
                 finally:
