@@ -92,10 +92,10 @@ class Broker:
     async def main_loop(self):
         while True:
             rows = await self.broadcast_queue.get()
-            print("ROWZ", rows)
             if rows:
                 await self.subscription_lock.acquire()
                 try:
+                    print("DO IT", rows)
                     await self.process_rows(rows)
                 finally:
                     self.subscription_lock.release()
