@@ -29,9 +29,9 @@ class MoteBroker(Broker):
         return PersistenceManager()
 
     async def load_tree(self):
-        return sync_to_async(
+        return await sync_to_async(
             PersistenceManager.load_tree,
-        )
+        )()
 
     @cached_property
     def ws_server(self):
