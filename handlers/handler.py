@@ -251,7 +251,7 @@ class Handler(Client, ReaderWriter):
 
     async def handle_unsubscribe(self, packet: UnsubscribePacket):
         for topic in packet.topics:
-            if Broker.instance.handle_unsubscribe(
+            if await Broker.instance.handle_unsubscribe(
                 client=self,
                 topic_str=topic,
             ):
@@ -261,7 +261,7 @@ class Handler(Client, ReaderWriter):
 
     async def handle_disconnected(self):
         for topic in self.subscriptions:
-            Broker.instance.handle_unsubscribe(self, topic)
+            await Broker.instance.handle_unsubscribe(self, topic)
         Broker.instance.remove_client(self)
         if self.last_will is not None:
             await Broker.instance.handle_publish(self.last_will)

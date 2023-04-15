@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from functools import cached_property
-from asyncio import Queue, get_event_loop, ensure_future, Task, CancelledError
+from asyncio import Queue, get_event_loop, ensure_future, Task, CancelledError, Lock
 from typing import Any
 
 from models.client import Client
@@ -41,16 +41,25 @@ class Broker:
                 tree_item=tree_item,
             )
             await client.handle_message(message)
-        client_set = self.subscriptions << topic.node_list
-        client_set[client.id] = qos
+
+        await self.subscription_lock.acquire()
+        try:
+            client_set = self.subscriptions << topic.node_list
+            client_set[client.id] = qos
+        finally:
+            self.subscription_lock.release()
         return True
 
-    def handle_unsubscribe(self, client: Client, topic_str: str):
+    async def handle_unsubscribe(self, client: Client, topic_str: str):
         topic = Topic.from_str(topic_str)
-        client_set = self.subscriptions << topic.node_list
-        client_set.pop(client.id)
-        if not client_set:
-            self.subscriptions.cascade_delete(topic.node_list)
+        await self.subscription_lock.acquire()
+        try:
+            client_set = self.subscriptions << topic.node_list
+            client_set.pop(client.id)
+            if not client_set:
+                self.subscriptions.cascade_delete(topic.node_list)
+        finally:
+            self.subscription_lock.release()
         return True
 
     @abstractmethod
@@ -77,25 +86,33 @@ class Broker:
             rows = [message.as_single_row()]
         await self.broadcast_queue.put(rows)
 
+    async def process_rows(self, rows: list):
+        messages = create_messages_for_subscriptions(
+            self.subscriptions,
+            rows,
+        )
+        for client_list, topic_nodes, data in messages:
+            topic = str(Topic.from_nodes(topic_nodes))
+            for client_id, qos in client_list.items():
+                client = self.clients.get(client_id)
+                if client is None:
+                    continue
+                message = OutgoingMessage(
+                    topic=topic,
+                    qos=qos,
+                    data=data,
+                )
+                await client.handle_message(message)
+
     async def main_loop(self):
         while True:
             rows = await self.broadcast_queue.get()
-            messages = create_messages_for_subscriptions(
-                self.subscriptions,
-                rows,
-            )
-            for client_list, topic_nodes, data in messages:
-                topic = str(Topic.from_nodes(topic_nodes))
-                for client_id, qos in client_list.items():
-                    client = self.clients.get(client_id)
-                    if client is None:
-                        continue
-                    message = OutgoingMessage(
-                        topic=topic,
-                        qos=qos,
-                        data=data,
-                    )
-                    await client.handle_message(message)
+            if rows:
+                await self.subscription_lock.acquire()
+                try:
+                    await self.process_rows(rows)
+                finally:
+                    self.subscription_lock.release()
 
     def add_client(self, client: Client):
         self.clients[client.id] = client
@@ -141,6 +158,10 @@ class Broker:
     @cached_property
     def broadcast_queue(self) -> Queue:
         return Queue(loop=self.event_loop)
+
+    @cached_property
+    def subscription_lock(self) -> Lock:
+        return Lock(loop=self.event_loop)
 
     @classmethod
     def start(cls, *args, **kwargs):
