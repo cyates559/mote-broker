@@ -251,10 +251,7 @@ class Handler(Client, ReaderWriter):
 
     async def handle_unsubscribe(self, packet: UnsubscribePacket):
         for topic in packet.topics:
-            if await Broker.instance.unsubscribe(
-                client=self,
-                topic_str=topic,
-            ):
+            if await Broker.instance.unsubscribe(self, topic):
                 self.subscriptions.remove(topic)
                 response = UnsubscribeAcknowledgePacket(id=packet.id)
                 await response.write(self)
