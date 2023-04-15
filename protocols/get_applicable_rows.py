@@ -46,7 +46,7 @@ def get_applicable_rows(topic: list, data: bytes, qos: int, base: list, tree: Tr
             for key, branch in tree.items():
                 if key == LEAF_KEY:
                     continue
-                result.append((topic + [key], data, qos))
+                result.append((base + [key], data, qos))
         else:
             for key, branch in tree.items():
                 if key == LEAF_KEY:
