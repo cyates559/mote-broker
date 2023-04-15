@@ -55,7 +55,9 @@ class Broker:
         await self.subscription_lock.acquire()
         try:
             client_set = self.subscriptions << topic.node_list
-            client_set.pop(client.id)
+            got_id = client_set.pop(client.id, False)
+            if not got_id:
+                log.error(f"Subscription {topic_str} not found for {client}")
             if not client_set:
                 self.subscriptions.cascade_delete(topic.node_list)
         finally:
