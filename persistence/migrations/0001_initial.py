@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="RetainedMessage",
+            name="Message",
             fields=[
                 ("topic", models.TextField(primary_key=True, serialize=False)),
                 ("data", models.BinaryField(default=None, null=True)),

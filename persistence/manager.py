@@ -22,10 +22,10 @@ class PersistenceManager:
 
         os.environ["DJANGO_SETTINGS_MODULE"] = "db.settings"
         django.setup()
-        from persistence.models import RetainedMessage
+        from persistence.models import Message
 
         results = RecursiveDefaultDict()
-        for message in RetainedMessage.objects.all():
+        for message in Message.objects.all():
             split_topic = message.topic.split("/")
             pointer = results
             for node in split_topic:
@@ -80,7 +80,7 @@ def loop(running, condition, events):
 
         os.environ["DJANGO_SETTINGS_MODULE"] = "db.settings"
         django.setup()
-        from persistence.models import RetainedMessage
+        from persistence.models import Message
 
         while running[0]:
             with condition:
@@ -96,17 +96,17 @@ def loop(running, condition, events):
                     delete_list.append(topic)
                 else:
                     create_list.append(
-                        RetainedMessage(
+                        Message(
                             topic=topic,
                             data=data,
                             qos=qos,
                         )
                     )
             if delete_list:
-                queryset = RetainedMessage.objects.filter(topic__in=delete_list)
+                queryset = Message.objects.filter(topic__in=delete_list)
                 count, _ = queryset.delete()
             if create_list:
-                RetainedMessage.objects.bulk_create(
+                Message.objects.bulk_create(
                     create_list,
                     update_conflicts=True,
                     unique_fields=["topic"],
