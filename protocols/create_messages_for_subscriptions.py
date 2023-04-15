@@ -20,10 +20,8 @@ def build_message_data(leaf_rows: list, base: list, wildcards: bool):
                     ref_key = node
             # set the leaf
             ref[ref_key] = data
-        print("BASE", base)
         return stringify(tree)
     else:
-        print("the thing u want to see")
         # this is not a tree subscription, we just want whatever the last row says
         return leaf_rows[-1][1]
 
@@ -60,9 +58,10 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
                 response_data,
             ))
         else:
+            new_wildcards = wildcards
             if filter_node == ALL_CARD:
                 new_rows = rows
-                wildcards = True
+                new_wildcards = True
             else:
                 new_rows = rows_by_current_node[filter_node]
             if new_rows:
@@ -72,7 +71,7 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
                         rows=new_rows,
                         base=base + [filter_node],
                         depth=depth + 1,
-                        wildcards=wildcards,
+                        wildcards=new_wildcards,
                     )
                 )
     return messages
