@@ -2,6 +2,7 @@ import dataclasses
 from functools import cached_property, partial
 from sys import stderr
 
+from asgiref.sync import sync_to_async
 
 from brokers.broker import Broker
 from persistence.manager import PersistenceManager
@@ -28,10 +29,10 @@ class MoteBroker(Broker):
         return PersistenceManager()
 
     async def load_tree(self):
-        return await self.event_loop.run_in_executor(
-            executor=None,
-            func=PersistenceManager.load_tree,
-        )
+        return await sync_to_async(
+            PersistenceManager.load_tree,
+            thread_sensitive=False,
+        )()
 
     @cached_property
     def ws_server(self):
