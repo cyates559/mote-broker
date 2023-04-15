@@ -10,6 +10,8 @@ class PacketRemainingBytes(PacketType):
 
     @classmethod
     def to_bytes(cls, value) -> bytes:
+        if value is None:
+            return b""
         return value
 
 
