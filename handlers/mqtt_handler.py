@@ -1,7 +1,7 @@
 import dataclasses
 from asyncio import StreamReader, StreamWriter
 
-from handler import Handler
+from handlers.handler import Handler
 
 # noinspection SpellCheckingInspection
 PEER_NAME = "peername"
@@ -21,12 +21,10 @@ class MQTTHandler(Handler):
         if not self.is_closed:
             self.writer.write(data)
 
-    async def read(self, n=-1) -> bytes:
-        if n == -1:
-            data = await self.reader.read(n)
-        else:
-            data = await self.reader.readexactly(n)
-        return data
+    async def read(self, size=-1) -> bytes:
+        if size == -1:
+            return await self.reader.read(size)
+        return await self.reader.readexactly(size)
 
     async def drain(self):
         if not self.is_closed:

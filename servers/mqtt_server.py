@@ -1,8 +1,9 @@
 import asyncio
 from asyncio import StreamReader, StreamWriter
 
-from mqtt_handler import MQTTHandler
-from server import Server
+from brokers.broker import Broker
+from handlers.mqtt_handler import MQTTHandler
+from servers.server import Server
 
 
 class MQTTServer(Server):
@@ -14,12 +15,12 @@ class MQTTServer(Server):
             reuse_address=True,
             reuse_port=True,
             ssl=self.ssl_context,
-            loop=self.event_loop,
+            loop=Broker.instance.event_loop,
         )
 
     @staticmethod
-    def create_handler(reader: StreamReader, writer: StreamWriter):
-        MQTTHandler(reader, writer)
+    async def create_handler(reader: StreamReader, writer: StreamWriter):
+        await MQTTHandler.new_connection(reader, writer)
 
     async def close(self):
         self.instance.close()

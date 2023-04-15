@@ -1,14 +1,10 @@
-from collections import defaultdict
+import os
 from functools import cached_property
 from multiprocessing import Process, Condition, Lock, Manager
 
-import os
-
-from asgiref.sync import sync_to_async
-
-
-def RecursiveDefaultDict():
-    return defaultdict(RecursiveDefaultDict)
+from logger import log
+from models.topic import TOPIC_SEP
+from utils.recursive_default_dict import RecursiveDefaultDict
 
 
 class PersistenceManager:
@@ -20,26 +16,22 @@ class PersistenceManager:
             target=loop, args=(self.running, self.condition, self.events)
         )
 
-    @classmethod
-    async def get_tree_async(cls):
-        return await sync_to_async(cls.get_tree, thread_sensitive=False)()
-
     @staticmethod
-    def get_tree() -> defaultdict:
+    def load_tree() -> RecursiveDefaultDict:
         import django
 
         os.environ["DJANGO_SETTINGS_MODULE"] = "db.settings"
         django.setup()
-        from persistence.models import Message
+        from persistence.models import RetainedMessage
 
         results = RecursiveDefaultDict()
-        for message in Message.objects.all():
+        for message in RetainedMessage.objects.all():
             split_topic = message.topic.split("/")
             pointer = results
             for node in split_topic:
                 if node != "":
                     pointer = pointer[node]
-            pointer["/"] = message
+            pointer["/"] = message.data
         return results
 
     def clear(self, topic: str):
@@ -48,10 +40,9 @@ class PersistenceManager:
             self.events.append((topic, None, 0))
             self.condition.notify()
 
-    def retain(self, topic: str, message: bytes, qos: int):
-        topic = self.parse_topic(topic)
+    def retain(self, *messages: (list, bytes, int)):
         with self.condition:
-            self.events.append((topic, message, qos))
+            self.events.extend(messages)
             self.condition.notify()
 
     @staticmethod
@@ -64,18 +55,18 @@ class PersistenceManager:
         return self.__class__.__name__
 
     def run(self):
-        print(f"Stopping {self.name}...", end="")
+        log.info(f"Starting {self.name}...", end="")
         self.running[0] = True
         self.process.start()
-        print("Done")
+        log.info("Done")
 
     def stop(self):
-        print(f"Stopping {self.name}...", end="")
+        log.info(f"Stopping {self.name}...", end="")
         self.running[0] = False
         with self.condition:
             self.condition.notify()
         self.process.join()
-        print("Done")
+        log.info("Done")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
@@ -86,9 +77,11 @@ class PersistenceManager:
 def loop(running, condition, events):
     try:
         import django
+
         os.environ["DJANGO_SETTINGS_MODULE"] = "db.settings"
         django.setup()
-        from persistence.models import Message
+        from persistence.models import RetainedMessage
+
         while running[0]:
             with condition:
                 condition.wait_for(lambda: events or not running[0])
@@ -97,26 +90,27 @@ def loop(running, condition, events):
                     events.pop()
             delete_list = []
             create_list = []
-            for topic, data, qos in consumed:
+            for topic_nodes, data, qos in consumed:
+                topic = TOPIC_SEP.join(topic_nodes)
                 if data is None:
                     delete_list.append(topic)
                 else:
                     create_list.append(
-                        Message(
+                        RetainedMessage(
                             topic=topic,
                             data=data,
                             qos=qos,
                         )
                     )
             if delete_list:
-                queryset = Message.objects.filter(topic__in=delete_list)
+                queryset = RetainedMessage.objects.filter(topic__in=delete_list)
                 count, _ = queryset.delete()
             if create_list:
-                Message.objects.bulk_create(
+                RetainedMessage.objects.bulk_create(
                     create_list,
                     update_conflicts=True,
                     unique_fields=["topic"],
-                    update_fields=["data", "qos"]
+                    update_fields=["data", "qos"],
                 )
     except KeyboardInterrupt:
         pass

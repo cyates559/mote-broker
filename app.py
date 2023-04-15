@@ -1,4 +1,4 @@
-from broker import MoteBroker
+from brokers.mote import MoteBroker
 
 
 if __name__ == "__main__":

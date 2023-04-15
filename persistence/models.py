@@ -7,7 +7,7 @@ from django.db.models import (
 )
 
 
-class Message(Model):
+class RetainedMessage(Model):
     objects = Manager()
 
     topic = TextField(primary_key=True)

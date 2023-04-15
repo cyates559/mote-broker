@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from persistence.models import Message
+from persistence.models import RetainedMessage
 
 
-@admin.register(Message)
+@admin.register(RetainedMessage)
 class MessageAdmin(admin.ModelAdmin):
     list_display = (
         "topic",

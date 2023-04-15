@@ -3,13 +3,14 @@ from abc import abstractmethod
 from functools import cached_property
 from typing import Any
 
+from logger import log
+
 
 @dataclasses.dataclass
 class Server:
     host: str
     port: int
     ssl_context: Any
-    event_loop: Any
     instance: Any = None
 
     @abstractmethod
@@ -17,14 +18,18 @@ class Server:
         pass
 
     async def __aenter__(self):
-        print(f"Starting {self.name}...", end="")
-        self.instance = await self.start_instance()
-        print("Done")
+        log.info(f"Starting {self.name}...", end="")
+        try:
+            self.instance = await self.start_instance()
+        except:
+            log.traceback()
+            raise
+        log.info("Done")
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        print(f"Stopping {self.name}...", end="")
+        log.info(f"Stopping {self.name}...", end="")
         await self.close()
-        print("Done")
+        log.info("Done")
 
     async def close(self):
         self.instance.close()
