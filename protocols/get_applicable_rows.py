@@ -55,7 +55,7 @@ def get_applicable_rows(topic: list, data: bytes, qos: int, base: list, tree: Tr
                     topic=next_topic,
                     data=data,
                     qos=qos,
-                    base=base + [node],
+                    base=base + [key],
                     tree=branch,
                     found_wildcard=True,
                 )
