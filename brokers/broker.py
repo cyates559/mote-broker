@@ -95,7 +95,6 @@ class Broker:
             if rows:
                 await self.subscription_lock.acquire()
                 try:
-                    print("DO IT", rows)
                     await self.process_rows(rows)
                 finally:
                     self.subscription_lock.release()
@@ -105,6 +104,7 @@ class Broker:
             self.subscriptions,
             rows,
         )
+        print(rows, "=>", messages)
         for client_list, topic_nodes, data in messages:
             topic = str(Topic.from_nodes(topic_nodes))
             for client_id, qos in client_list.items():
