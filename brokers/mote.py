@@ -49,10 +49,10 @@ class MoteBroker(Broker):
             ssl_context=self.ssl_context,
         )
 
-    async def main_loop(self):
+    async def create_context(self, main: callable):
         with self.persistence_manager:
             async with self.ws_server, self.mqtt_server:
-                await super().main_loop()
+                await main()
 
     def retain_rows(self, rows: list):
         self.persistence_manager.retain(*rows)

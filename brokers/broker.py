@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from functools import cached_property
-from asyncio import Queue, get_event_loop, ensure_future, Task
+from asyncio import Queue, get_event_loop, ensure_future, Task, CancelledError
 from typing import Any
 
 from models.client import Client
@@ -78,7 +78,6 @@ class Broker:
         await self.broadcast_queue.put(rows)
 
     async def main_loop(self):
-        self.tree = await self.load_tree()
         while True:
             rows = await self.broadcast_queue.get()
             messages = create_messages_for_subscriptions(
@@ -107,7 +106,7 @@ class Broker:
     def run(self):
         try:
             self.main_task = ensure_future(
-                self.main(),
+                self.create_context(self.main),
                 loop=self.event_loop,
             )
             self.event_loop.run_forever()
@@ -116,9 +115,16 @@ class Broker:
             log.info("Interrupted!")
             self.event_loop.run_until_complete(self.shutdown())
 
+    @abstractmethod
+    async def create_context(self, main: callable):
+        pass
+
     async def main(self):
         try:
+            self.tree = await self.load_tree()
             await self.main_loop()
+        except CancelledError:
+            raise
         except:
             log.traceback()
             raise
