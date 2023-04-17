@@ -36,10 +36,10 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
     for row in rows:
         topic = row[0]
         lt = len(topic)
-        if lt < depth:
+        if depth < lt:
             node = topic[depth]
             rows_by_current_node[node].append(row)
-        elif lt == depth:
+        elif depth == lt:
             leaf_rows.append(row)
     messages = []
     for filter_node, branch in subscriptions.items():
