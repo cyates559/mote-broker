@@ -120,12 +120,7 @@ class Broker:
     async def publish(self, message: IncomingMessage):
         if message.retain:
             if message.tree:
-                if message.update:
-                    rows = message.flatten_into_rows(self.tree)
-                else:
-                    # create objects
-                    rows = NotImplemented
-                    raise rows
+                rows = message.flatten_into_rows(self.tree)
             else:
                 rows = message.get_applicable_rows(self.tree)
             self.retain_rows(rows)

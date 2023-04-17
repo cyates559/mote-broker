@@ -1,7 +1,6 @@
 import dataclasses
 from json import loads as treeify
 
-from models.constants import TOPIC_SEP
 from models.topic import Topic
 from packet.connect import ConnectPacket
 from packet.publish import PublishPacket
@@ -17,7 +16,6 @@ class IncomingMessage:
     topic: Topic
     qos: int
     retain: bool
-    update: bool
     tree: bool
     data: bytes
 
@@ -55,7 +53,6 @@ class IncomingMessage:
                 topic=Topic.from_str(topic),
                 qos=qos,
                 retain=True,
-                update=True,
                 tree=tree,
                 data=data,
             )
@@ -64,7 +61,6 @@ class IncomingMessage:
                 topic=Topic.from_str(raw_topic),
                 qos=qos,
                 retain=False,
-                update=False,
                 tree=False,
                 data=data,
             )

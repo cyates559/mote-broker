@@ -4,6 +4,7 @@ from asyncio import Task, ensure_future, Future, wait_for, IncompleteReadError
 from collections import deque
 from functools import cached_property
 from typing import Type
+from asyncio.exceptions import TimeoutError as SyncTimeoutError
 
 from models.client import Client
 from models.constants import TOPIC_SEP
@@ -306,7 +307,7 @@ class Handler(Client, ReaderWriter):
                     timeout=self.reader_timeout,
                 )
                 await self.handle_packet(packet)
-            except TimeoutError:
+            except SyncTimeoutError:
                 return
 
     async def read_next_packet(self):
