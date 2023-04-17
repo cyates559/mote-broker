@@ -306,7 +306,7 @@ class Handler(Client, ReaderWriter):
                     timeout=self.reader_timeout,
                 )
                 await self.handle_packet(packet)
-            finally:
+            except TimeoutError:
                 return
 
     async def read_next_packet(self):
