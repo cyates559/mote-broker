@@ -1,4 +1,4 @@
-from models.constants import EVERYTHING_CARD, ALL_CARD, LEAF_KEY
+from models.constants import EVERYTHING_CARD, MANY_CARD, LEAF_KEY
 from protocols.exceptions import InvalidEverythingCard
 from protocols.is_node_static import is_node_static
 from utils.tree_item import empty, TreeItem
@@ -19,7 +19,7 @@ def filter_tree_with_topic(
         if next_topic is None:
             return tree
         raise InvalidEverythingCard
-    elif node == ALL_CARD:
+    elif node == MANY_CARD:
         result = {}
         if not next_topic:
             for key, val in tree.items():

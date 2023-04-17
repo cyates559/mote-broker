@@ -1,6 +1,10 @@
-from models.constants import EVERYTHING_CARD, ALL_CARD
+from models.constants import EVERYTHING_CARD, MANY_CARD, LEAF_KEY
 from protocols.exceptions import InvalidEverythingCard
+from utils.recursive_default_dict import RecursiveDefaultDict
 from utils.tree_item import TreeItem
+
+
+missing = object()
 
 
 def flatten_message_into_rows(
@@ -8,6 +12,7 @@ def flatten_message_into_rows(
     data: TreeItem,
     qos: int,
     base: list,
+    tree: RecursiveDefaultDict,
 ) -> list:
     """
     Parse a topic with wildcards into multiple messages
@@ -17,12 +22,25 @@ def flatten_message_into_rows(
     next_topic = topic[1:]
     if node == EVERYTHING_CARD:
         raise InvalidEverythingCard
-    elif node == ALL_CARD:
+    elif node == MANY_CARD:
         if not next_topic:
-            return [
+            flags = data.pop(LEAF_KEY, None)
+            results = [
                 (base + [key], val.encode(), qos)
                 for key, val in data.items()
             ]
+            if flags == MANY_CARD:
+                # using this flag means the keys in our retained tree should
+                # match the keys in the retained tree once we are done
+                for key, val in tree:
+                    if key == LEAF_KEY:
+                        continue
+                    leaf = val.get(LEAF_KEY, missing)
+                    if leaf is missing:
+                        continue
+                    if data.get(key, missing) is missing:
+                        results.append((base + [key], "", qos))
+            return results
         else:
             result = []
             for key, val in data.items():
@@ -31,6 +49,7 @@ def flatten_message_into_rows(
                     data=val,
                     qos=qos,
                     base=base,
+                    tree=tree.get(key, {}),
                 ))
             return result
     elif not next_topic:
@@ -41,4 +60,5 @@ def flatten_message_into_rows(
             data=data,
             qos=qos,
             base=base + [node],
+            tree=tree.get(node, {})
         )

@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from models.constants import LEAF_KEY, ALL_CARD
+from models.constants import LEAF_KEY, MANY_CARD
 from protocols.is_node_static import is_node_static
 from protocols.stringify import stringify
 from utils.recursive_default_dict import RecursiveDefaultDict
@@ -58,7 +58,7 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
             ))
         else:
             new_wildcards = wildcards
-            if filter_node == ALL_CARD:
+            if filter_node == MANY_CARD:
                 new_rows = rows
                 new_wildcards = True
             else:
