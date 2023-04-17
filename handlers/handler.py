@@ -298,13 +298,16 @@ class Handler(Client, ReaderWriter):
 
     async def reader_loop(self):
         while True:
-            await self.check_running_tasks()
-            packet = await wait_for(
-                self.read_next_packet(),
-                loop=Broker.instance.event_loop,
-                timeout=self.reader_timeout,
-            )
-            await self.handle_packet(packet)
+            try:
+                await self.check_running_tasks()
+                packet = await wait_for(
+                    self.read_next_packet(),
+                    loop=Broker.instance.event_loop,
+                    timeout=self.reader_timeout,
+                )
+                await self.handle_packet(packet)
+            finally:
+                return
 
     async def read_next_packet(self):
         msg_type, flags = await self.decode_header()
