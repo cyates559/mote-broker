@@ -48,7 +48,7 @@ def flatten_message_into_rows(
                     topic=next_topic,
                     data=val,
                     qos=qos,
-                    base=base,
+                    base=base + [key],
                     tree=tree.get(key, {}),
                 ))
             return result
