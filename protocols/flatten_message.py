@@ -1,8 +1,7 @@
 from models.constants import EVERYTHING_CARD, MANY_CARD, LEAF_KEY
 from protocols.exceptions import InvalidEverythingCard
 from utils.recursive_default_dict import RecursiveDefaultDict
-from utils.tree_item import TreeItem
-
+from utils.tree_item import TreeItem, empty
 
 missing = object()
 
@@ -39,7 +38,7 @@ def flatten_message_into_rows(
                     if leaf is missing:
                         continue
                     if data.get(key, missing) is missing:
-                        results.append((base + [key], b"", qos))
+                        results.append((base + [key], empty, qos))
             return results
         else:
             result = []
