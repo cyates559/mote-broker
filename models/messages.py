@@ -25,13 +25,14 @@ class IncomingMessage:
     def from_packet(cls, packet: PublishPacket):
         return cls.from_raw_data(packet.topic, packet.data, packet.flags.qos, packet.flags.retain)
 
-    def flatten_into_rows(self) -> list:
+    def flatten_into_rows(self, tree) -> list:
         data = treeify(self.data.decode())
         return flatten_message_into_rows(
             self.topic.node_list,
             data,
             self.qos,
             [],
+            tree,
         )
 
     @classmethod
