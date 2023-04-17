@@ -32,7 +32,7 @@ def flatten_message_into_rows(
             if flags == MANY_CARD:
                 # using this flag means the keys in our retained tree should
                 # match the keys in the retained tree once we are done
-                for key, val in tree:
+                for key, val in tree.items():
                     if key == LEAF_KEY:
                         continue
                     leaf = val.get(LEAF_KEY, missing)
