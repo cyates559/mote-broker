@@ -39,7 +39,7 @@ def flatten_message_into_rows(
                     if leaf is missing:
                         continue
                     if data.get(key, missing) is missing:
-                        results.append((base + [key], "", qos))
+                        results.append((base + [key], b"", qos))
             return results
         else:
             result = []
