@@ -35,14 +35,12 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
     # organize rows into a dict by literal node at given depth
     for row in rows:
         topic = row[0]
-        try:
-            # branch
+        lt = len(topic)
+        if lt < depth:
             node = topic[depth]
-        except IndexError:
-            # leaf
-            leaf_rows.append(row)
-        else:
             rows_by_current_node[node].append(row)
+        elif lt == depth:
+            leaf_rows.append(row)
     messages = []
     for filter_node, branch in subscriptions.items():
         if filter_node == LEAF_KEY:

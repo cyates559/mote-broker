@@ -122,7 +122,6 @@ class Broker:
             if message.tree:
                 if message.update:
                     rows = message.flatten_into_rows(self.tree)
-                    print("THE ROWS", rows)
                 else:
                     # create objects
                     rows = NotImplemented
