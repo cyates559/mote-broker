@@ -35,6 +35,7 @@ class Broker:
         pass
 
     def add_client(self, client: Client):
+        print("ADD CLIENT")
         self.clients[client.id] = client
 
     def remove_client(self, client: Client):

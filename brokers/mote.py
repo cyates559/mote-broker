@@ -1,6 +1,5 @@
 import dataclasses
-from functools import cached_property, partial
-from sys import stderr
+from functools import cached_property
 
 from asgiref.sync import sync_to_async
 
@@ -8,6 +7,7 @@ from brokers.broker import Broker
 from persistence.manager import PersistenceManager
 from servers.mqtt_server import MQTTServer
 from servers.websocket_server import WebsocketServer
+from utils.stdout_log import print_in_green, print_in_yellow, print_in_red
 
 
 @dataclasses.dataclass
@@ -17,8 +17,10 @@ class MoteBroker(Broker):
     ws_host: str = None
     mqtt_port: int = 1993
     ws_port: int = 53535
-    log: callable = print
-    log_error: callable = partial(print, file=stderr)
+    log_info: callable = print
+    log_debug: callable = print_in_green
+    log_warn: callable = print_in_yellow
+    log_error: callable = print_in_red
 
     @cached_property
     def ssl_context(self):

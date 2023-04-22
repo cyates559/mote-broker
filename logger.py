@@ -2,6 +2,7 @@ import traceback
 from functools import cached_property
 
 
+
 class Log:
     @cached_property
     def context(self):
@@ -10,7 +11,7 @@ class Log:
         return Broker.instance
 
     def info(self, *args, **kwargs):
-        self.context.log(*args, **kwargs)
+        self.context.log_info(*args, **kwargs)
 
     def error(self, *args, **kwargs):
         self.context.log_error(*args, **kwargs)
