@@ -149,12 +149,7 @@ class Handler(Client, ReaderWriter):
     async def new_connection(cls, *args, **kwargs):
         # noinspection PyArgumentList
         handler = cls(*args, **kwargs)
-        try:
-            await handler.handle_connect()
-        except:
-            log.traceback()
-        finally:
-            await handler.handle_disconnected()
+        await handler.handle_connect()
         return handler
 
     async def handle_connect(self):
