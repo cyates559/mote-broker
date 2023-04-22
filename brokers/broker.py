@@ -35,11 +35,9 @@ class Broker:
         pass
 
     def add_client(self, client: Client):
-        log.debug("add client", client.id, client)
         self.clients[client.id] = client
 
     def remove_client(self, client: Client):
-        log.warn("remove client", client)
         self.clients.pop(client.id)
 
     @abstractmethod
@@ -162,7 +160,7 @@ class Broker:
                 client_set = self.subscriptions << topic.node_list
                 got_id = client_set.pop(client.id, False)
                 if not got_id:
-                    log.error(f"Subscription {topic_str} not found for {client}")
+                    log.warn(f"Subscription {topic_str} not found for {client}")
                 if not client_set:
                     self.subscriptions.cascade_delete(topic.node_list)
         finally:
