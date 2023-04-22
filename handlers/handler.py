@@ -169,7 +169,7 @@ class Handler(Client, ReaderWriter):
         except SyncTimeoutError:
             log.info(f"Connection timed out for {self}")
         except Disconnected as x:
-            log.info(x)
+            log.info(x, "from", self)
         except:
             log.traceback()
         finally:
