@@ -17,7 +17,7 @@ class Format:
     effect: int
 
     def __post_init__(self):
-        self.slug = f"{CONTROL_SEQUENCE}{self.selector}{self.effect}"
+        self.slug = f"{CONTROL_SEQUENCE}{self.selector}{self.effect}{DELIMITER}"
 
 
 FOREGROUND_BLACK = Format(FOREGROUND_SELECTOR, 0)

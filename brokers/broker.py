@@ -24,6 +24,7 @@ class Broker:
         self.main_task = None
         self.subscriptions = RecursiveDefaultDict(default_type=dict)
         self.clients = {}
+        log.debug("hey there")
         return self
 
     @abstractmethod
