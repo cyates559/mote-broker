@@ -13,6 +13,12 @@ class Log:
     def info(self, *args, **kwargs):
         self.context.log_info(*args, **kwargs)
 
+    def warn(self, *args, **kwargs):
+        self.context.log_warn(*args, **kwargs)
+
+    def debug(self, *args, **kwargs):
+        self.context.log_debug(*args, **kwargs)
+
     def error(self, *args, **kwargs):
         self.context.log_error(*args, **kwargs)
 
