@@ -248,7 +248,7 @@ class Handler(Client, ReaderWriter):
     async def handle_disconnected(self):
         while self.tasks:
             task = await self.tasks.pop()
-            if task.done():
+            if task is None or task.done():
                 continue
             await task.cancel()
         await Broker.instance.unsubscribe(self, *self.subscriptions)
