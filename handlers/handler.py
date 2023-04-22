@@ -1,6 +1,6 @@
 import dataclasses
 from abc import abstractmethod
-from asyncio import Task, ensure_future, Future, wait_for, IncompleteReadError
+from asyncio import ensure_future, Future, wait_for, IncompleteReadError
 from collections import deque
 from functools import cached_property
 from typing import Type
@@ -51,7 +51,6 @@ class PacketFuture:
 
 class Handler(Client, ReaderWriter):
     reader_timeout: float
-    reader_task: Task
     last_will: IncomingMessage
 
     def get_packet_id(self):
@@ -139,10 +138,6 @@ class Handler(Client, ReaderWriter):
             self.handle_publish_qos_2,
         ]
 
-    def start_reader(self) -> Task:
-        task = Task(self.reader_loop(), loop=Broker.instance.event_loop)
-        return task
-
     @staticmethod
     def infer_packet_class(msg_type):
         """
@@ -156,18 +151,6 @@ class Handler(Client, ReaderWriter):
         handler = cls(*args, **kwargs)
         try:
             await handler.handle_connect()
-        except TimeoutError:
-            log.info(f"Connection timed out for {handler}")
-        except Disconnected as x:
-            log.info(x)
-        except (
-            EOFError,
-            UnknownPacketError,
-            TimeoutError,
-            IncompleteReadError,
-            Disconnected,
-        ) as x:
-            log.info("Disconnected", x.__class__.__name__, x)
         except:
             log.traceback()
         finally:
@@ -175,19 +158,27 @@ class Handler(Client, ReaderWriter):
         return handler
 
     async def handle_connect(self):
-        connect_packet = await ConnectPacket.read(self)
-        self.id = connect_packet.client_id
-        self.reader_timeout = connect_packet.keep_alive + 1
-        acknowledge_packet = ConnectAcknowledgePacket(
-            session_parent=0,
-            return_code=ConnectAcknowledgePacket.ReturnCode.ACCEPTED,
-        )
-        self.last_will = self.get_last_will(connect_packet)
-        await acknowledge_packet.write(self)
-        log.info(self, "connected")
-        Broker.instance.add_client(self)
-        self.reader_task = self.start_reader()
-        await self.reader_task
+        try:
+            connect_packet = await ConnectPacket.read(self)
+            self.id = connect_packet.client_id
+            self.reader_timeout = connect_packet.keep_alive + 1
+            acknowledge_packet = ConnectAcknowledgePacket(
+                session_parent=0,
+                return_code=ConnectAcknowledgePacket.ReturnCode.ACCEPTED,
+            )
+            self.last_will = self.get_last_will(connect_packet)
+            await acknowledge_packet.write(self)
+            log.info(self, "connected")
+            Broker.instance.add_client(self)
+            await self.reader_loop()
+        except SyncTimeoutError:
+            log.info(f"Connection timed out for {self}")
+        except Disconnected as x:
+            log.info(x)
+        except:
+            log.traceback()
+        finally:
+            await self.handle_disconnected()
 
     @staticmethod
     def get_last_will(packet: ConnectPacket):
@@ -260,6 +251,9 @@ class Handler(Client, ReaderWriter):
                 await response.write(self)
 
     async def handle_disconnected(self):
+        while self.tasks and self.tasks[0].done():
+            await task.cancel()
+            await self.tasks.popleft()
         await Broker.instance.unsubscribe(self, *self.subscriptions)
         Broker.instance.remove_client(self)
         if self.last_will is not None:
@@ -299,16 +293,13 @@ class Handler(Client, ReaderWriter):
 
     async def reader_loop(self):
         while True:
-            try:
-                await self.check_running_tasks()
-                packet = await wait_for(
-                    self.read_next_packet(),
-                    loop=Broker.instance.event_loop,
-                    timeout=self.reader_timeout,
-                )
-                await self.handle_packet(packet)
-            except SyncTimeoutError:
-                return
+            await self.check_running_tasks()
+            packet = await wait_for(
+                self.read_next_packet(),
+                loop=Broker.instance.event_loop,
+                timeout=self.reader_timeout,
+            )
+            await self.handle_packet(packet)
 
     async def read_next_packet(self):
         msg_type, flags = await self.decode_header()
