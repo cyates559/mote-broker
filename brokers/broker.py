@@ -39,6 +39,7 @@ class Broker:
         self.clients[client.id] = client
 
     def remove_client(self, client: Client):
+        log.warn("remove client", client)
         self.clients.pop(client.id)
 
     @abstractmethod
