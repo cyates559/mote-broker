@@ -19,5 +19,5 @@ class Client:
     def subscriptions(self):
         return set()
 
-    def __repr__(self):
+    def __str__(self):
         return self._str
