@@ -24,7 +24,6 @@ class Broker:
         self.main_task = None
         self.subscriptions = RecursiveDefaultDict(default_type=dict)
         self.clients = {}
-        log.debug("hey there")
         return self
 
     @abstractmethod
@@ -36,7 +35,7 @@ class Broker:
         pass
 
     def add_client(self, client: Client):
-        log.debug("add client", client)
+        log.debug("add client", client.id, client)
         self.clients[client.id] = client
 
     def remove_client(self, client: Client):
