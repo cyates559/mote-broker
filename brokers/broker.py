@@ -96,6 +96,8 @@ class Broker:
                 await self.subscription_lock.acquire()
                 try:
                     await self.process_rows(rows)
+                except:
+                    log.traceback()
                 finally:
                     self.subscription_lock.release()
 
