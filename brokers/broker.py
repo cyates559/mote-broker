@@ -100,6 +100,7 @@ class Broker:
                     self.subscription_lock.release()
 
     async def process_rows(self, rows: list):
+        log.debug("ROWS", rows)
         messages = create_messages_for_subscriptions(
             self.subscriptions,
             rows,
