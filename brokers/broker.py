@@ -15,8 +15,6 @@ from utils.recursive_default_dict import RecursiveDefaultDict
 class Broker:
     instance: Any
     tree: RecursiveDefaultDict
-    log: callable
-    log_error: callable
     main_task: Task
 
     def __new__(cls, *args, **kwargs):

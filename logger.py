@@ -2,7 +2,6 @@ import traceback
 from functools import cached_property
 
 
-
 class Log:
     @cached_property
     def context(self):

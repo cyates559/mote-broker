@@ -1,6 +1,6 @@
 import dataclasses
 from abc import abstractmethod
-from asyncio import ensure_future, Future, wait_for, IncompleteReadError
+from asyncio import ensure_future, Future, wait_for
 from collections import deque
 from functools import cached_property
 from typing import Type
@@ -15,7 +15,7 @@ from logger import log
 from packet.base_packet import PacketWithId
 from packet.connack import ConnectAcknowledgePacket
 from packet.connect import ConnectPacket
-from packet.packets import infer_packet_class, UnknownPacketError
+from packet.packets import infer_packet_class
 from packet.pingreq import PingRequestPacket
 from packet.pingresp import PingResponsePacket
 from packet.puback import PublishAcknowledgePacket
@@ -209,7 +209,7 @@ class Handler(Client, ReaderWriter):
     async def using_packet_id(self, func, packet: PacketWithId):
         self.used_ids.add(packet.id)
         try:
-            await func(packet)
+            return await func(packet)
         finally:
             self.used_ids.remove(packet.id)
 
@@ -278,9 +278,8 @@ class Handler(Client, ReaderWriter):
         coro = None
         if func is None:
             if isinstance(packet, PacketWithId):
-                if self.packet_notify(packet):
+                if self.using_packet_id(self.packet_notify, packet):
                     return
-                coro = self.using_packet_id(func, packet)
             raise UnexpectedPacketType(packet)
         if coro is None:
             # noinspection PyArgumentList
