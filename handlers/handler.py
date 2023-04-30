@@ -278,7 +278,7 @@ class Handler(Client, ReaderWriter):
         coro = None
         if func is None:
             if isinstance(packet, PacketWithId):
-                if self.using_packet_id(self.packet_notify, packet):
+                if self.packet_notify(packet):
                     return
             raise UnexpectedPacketType(packet)
         if coro is None:
