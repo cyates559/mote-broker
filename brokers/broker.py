@@ -105,6 +105,7 @@ class Broker:
             rows,
         )
         if len(rows) == 0:
+            print(rows)
             return
         for client_list, topic_nodes, data in messages:
             topic = str(Topic.from_nodes(topic_nodes))
