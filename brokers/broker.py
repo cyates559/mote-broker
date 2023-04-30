@@ -104,9 +104,7 @@ class Broker:
             self.subscriptions,
             rows,
         )
-        if len(rows) == 0:
-            print(rows)
-            return
+        log.debug(messages)
         for client_list, topic_nodes, data in messages:
             topic = str(Topic.from_nodes(topic_nodes))
             for client_id, qos in client_list.items():

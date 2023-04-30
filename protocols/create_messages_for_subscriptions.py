@@ -49,11 +49,12 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
                 base,
                 wildcards,
             )
-            messages.append((
-                branch,
-                base,
-                response_data,
-            ))
+            if len(branch) != 0:
+                messages.append((
+                    branch,
+                    base,
+                    response_data,
+                ))
         else:
             new_wildcards = wildcards
             if filter_node == MANY_CARD:
