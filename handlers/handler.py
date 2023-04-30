@@ -39,7 +39,7 @@ class TooManyPacketIds(Exception):
 class PacketFuture:
     type_code: int
     id: int
-    future: Future
+    result: Future
 
     @cached_property
     def hash(self):
@@ -103,7 +103,7 @@ class Handler(Client, ReaderWriter):
         packet_future = PacketFuture(
             type_code=packet_class.type_code,
             id=packet_id,
-            future=Future(loop=Broker.instance.event_loop),
+            result=Future(loop=Broker.instance.event_loop),
         )
         if packet_future in self.packet_futures:
             raise KeyError(
@@ -111,7 +111,7 @@ class Handler(Client, ReaderWriter):
             )
         self.packet_futures.add(packet_future)
         try:
-            result = await packet_future.future
+            result = await packet_future.result
         finally:
             self.packet_futures.remove(packet_future)
         return result
@@ -122,7 +122,7 @@ class Handler(Client, ReaderWriter):
                 packet_future.type_code == packet.type_code
                 and packet_future.id == packet.id
             ):
-                packet_future.future.set_result(packet)
+                packet_future.result.set_result(packet)
                 return True
         return False
 
@@ -274,18 +274,15 @@ class Handler(Client, ReaderWriter):
             await self.tasks.popleft()
 
     async def handle_packet(self, packet):
-        func = self.packet_map.get(packet.__class__)
-        coro = None
-        if func is None:
-            if isinstance(packet, PacketWithId):
-                if self.packet_notify(packet):
-                    return
-            raise UnexpectedPacketType(packet)
-        if coro is None:
+        handler = self.packet_map.get(packet.__class__)
+        if handler:
             # noinspection PyArgumentList
-            coro = func(packet)
-        task = ensure_future(coro, loop=Broker.instance.event_loop)
-        self.tasks.append(task)
+            coro = handler(packet)
+            task = ensure_future(coro, loop=Broker.instance.event_loop)
+            self.tasks.append(task)
+        elif isinstance(packet, PacketWithId) and self.packet_notify(packet):
+            return
+        raise UnexpectedPacketType(packet)
 
     async def reader_loop(self):
         while True:
