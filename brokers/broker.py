@@ -100,12 +100,10 @@ class Broker:
                     self.subscription_lock.release()
 
     async def process_rows(self, rows: list):
-        log.debug("ROWS", rows)
         messages = create_messages_for_subscriptions(
             self.subscriptions,
             rows,
         )
-        log.debug(messages)
         for client_list, topic_nodes, data in messages:
             topic = str(Topic.from_nodes(topic_nodes))
             for client_id, qos in client_list.items():

@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-from logger import log
 from models.constants import LEAF_KEY, MANY_CARD
 from protocols.is_node_static import is_node_static
 from protocols.stringify import stringify
