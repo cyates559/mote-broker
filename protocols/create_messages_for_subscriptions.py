@@ -43,20 +43,19 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
         elif depth == lt:
             leaf_rows.append(row)
     messages = []
+    has_leaves = bool(leaf_rows)
     for filter_node, branch in subscriptions.items():
-        if filter_node == LEAF_KEY:
+        if has_leaves and filter_node == LEAF_KEY:
             response_data = build_message_data(
                 leaf_rows,
                 base,
                 wildcards,
             )
-            log.debug("BRANCH", branch)
-            if len(branch) != 0:
-                messages.append((
-                    branch,
-                    base,
-                    response_data,
-                ))
+            messages.append((
+                branch,
+                base,
+                response_data,
+            ))
         else:
             new_wildcards = wildcards
             if filter_node == MANY_CARD:
