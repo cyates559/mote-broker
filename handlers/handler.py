@@ -282,7 +282,8 @@ class Handler(Client, ReaderWriter):
             self.tasks.append(task)
         elif isinstance(packet, PacketWithId) and self.packet_notify(packet):
             return
-        raise UnexpectedPacketType(packet)
+        else:
+            raise UnexpectedPacketType(packet)
 
     async def reader_loop(self):
         while True:
