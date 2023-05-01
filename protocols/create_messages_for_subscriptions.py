@@ -49,6 +49,7 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
                 base,
                 wildcards,
             )
+            log.debug("BRANCH", branch)
             if len(branch) != 0:
                 messages.append((
                     branch,
