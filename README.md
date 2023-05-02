@@ -64,6 +64,7 @@ cd mote-broker
 python3 -m venv venv
 source activate
 pip install -r requirements.txt
+python admin.py migrate
 ```
 
 # Running
