@@ -82,22 +82,22 @@ class Broker:
             log.info("Done")
             await self.create_context(self.main_loop)
         except CancelledError:
+            print("CANCELED")
             raise
         except:
             log.traceback()
             raise
 
     async def main_loop(self):
-        while True:
+        while self.running:
             try:
                 rows = await self.broadcast_queue.get()
                 if rows:
                     await self.subscription_lock.acquire()
                     await self.process_rows(rows)
-            except KeyboardInterrupt:
-                return
             except:
-                log.traceback()
+                if self.running:
+                    log.traceback()
             finally:
                 self.subscription_lock.release()
 
