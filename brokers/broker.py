@@ -93,15 +93,14 @@ class Broker:
             try:
                 rows = await self.broadcast_queue.get()
                 if rows:
-                    await self.subscription_lock.acquire()
-                    await self.process_rows(rows)
+                    async with self.subscription_lock.acquire():
+                        await self.subscription_lock.acquire()
+                        await self.process_rows(rows)
             except CancelledError:
                 raise
             except:
                 if self.running:
                     log.traceback()
-            finally:
-                self.subscription_lock.release()
 
     async def process_rows(self, rows: list):
         messages = create_messages_for_subscriptions(
