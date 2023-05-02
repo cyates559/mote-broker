@@ -2,7 +2,7 @@
 
 Mote is an expansion/modification of the MQTT protocol.  You can read more about MQTT at https://mqtt.org/.  The mote broker is a lot like an API server, but without any custom code needed, no plugins, no boilerplate, it works right out of the box..  There's a database, but if you want models, they would only need to be defined on the client side..
 
-# The basics of MQTT and Mote - An example
+# The basics of MQTT and Mote - an example
 In Mote and MQTT you can publish messages like so:
 ```
 topic=light/bedroom/set_on, data=1, retain=False
@@ -68,6 +68,4 @@ pip install -r requirements.txt
 ```
  source activate
  python app.py
- ```
-
 ```
