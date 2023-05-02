@@ -69,3 +69,12 @@ pip install -r requirements.txt
  source activate
  python app.py
 ```
+
+# You're still here
+If you've read this far it's because you somehow understand our cumbersome explaination of this extremely abstract project and you want to know more... you aren't going to be impressed until you see what this puppy can really do... 
+
+this section is being added today May 2 2023, I'm making lunch rn I'm just saving my spot
+
+
+## The Message Loop
+At the heart of an MQTT broker is the message loop.  Instead of processing one message at a time, with Mote, the broker's message loop processes lists of messages (or rows). When the Mote broker recieves a publish with the `tree` flag, it can recurse through that tree and turn it into a list of rows and put the entire list on the message loop.  Whenever a new list of rows is added to the message loop, it can recurse through a topic tree of current subscriptions and can build a single message for each subscription to send back to each interested client.  In this regard, Mote broker is a tree multiplexer, it can take one tree as input, and transform the input into many output formats.
