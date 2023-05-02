@@ -15,7 +15,9 @@ topic=light/bedroom/is_on, data=1, retain=True
 ```
 and this message will be retained in the database for any interested clients.
 
-A webapp might subscribe to the topic `light/+/is_on` to get a list of lights that are on. The response from the server is where Mote starts to differ from MQTT.  A typical MQTT server would respond with multiple separate publish messages/packets, and one might be `topic=light/bedroom/is_on, data=1, qos=1` to indicate the state of the bedroom light, and you might have another for `light/livingroom/is_on`, etc....
+A webapp might subscribe to the topic `light/+/is_on` to get a list of lights that are on. The response from the server is where Mote starts to differ from MQTT....
+
+A typical MQTT server would respond with multiple separate publish messages/packets, and one might be `topic=light/bedroom/is_on, data=1, qos=1` to indicate the state of the bedroom light, and you might have another for `light/livingroom/is_on`, etc....
 
 The mote-broker will always respond to subscriptions with the exact same topic as the subscription, this makes it a bit easier to know where a message is supposed to go, and it allows us to package multiple messages together in a JSON tree. Mote also allows clients to specify with a flag called `sync` if they want  an immediete response from the broker containing all the relevant retained messages.
 
