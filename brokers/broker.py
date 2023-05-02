@@ -155,8 +155,7 @@ class Broker:
         return True
 
     async def unsubscribe(self, client: Client, *topics: str):
-        await self.subscription_lock.acquire()
-        try:
+        async with self.subscription_lock:
             for topic_str in topics:
                 topic = Topic.from_str(topic_str)
                 client_set = self.subscriptions << topic.node_list
@@ -165,6 +164,4 @@ class Broker:
                     log.warn(f"Subscription {topic_str} not found for {client}")
                 if not client_set:
                     self.subscriptions.cascade_delete(topic.node_list)
-        finally:
-            self.subscription_lock.release()
         return True
