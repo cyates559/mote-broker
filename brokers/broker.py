@@ -83,7 +83,6 @@ class Broker:
             log.info("Done")
             await self.create_context(self.main_loop)
         except CancelledError:
-            print("CANCELED")
             raise
         except:
             log.traceback()
@@ -96,6 +95,8 @@ class Broker:
                 if rows:
                     await self.subscription_lock.acquire()
                     await self.process_rows(rows)
+            except CancelledError:
+                raise
             except:
                 if self.running:
                     log.traceback()
