@@ -89,15 +89,15 @@ class Broker:
 
     async def main_loop(self):
         while True:
-            rows = await self.broadcast_queue.get()
-            if rows:
-                await self.subscription_lock.acquire()
-                try:
+            try:
+                rows = await self.broadcast_queue.get()
+                if rows:
+                    await self.subscription_lock.acquire()
                     await self.process_rows(rows)
-                except:
-                    log.traceback()
-                finally:
-                    self.subscription_lock.release()
+            except:
+                log.traceback()
+            finally:
+                self.subscription_lock.release()
 
     async def process_rows(self, rows: list):
         messages = create_messages_for_subscriptions(
