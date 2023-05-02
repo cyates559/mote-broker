@@ -4,11 +4,15 @@ Mote is an expansion/modification of the MQTT protocol.  You can read more about
 
 # The basics of MQTT and Mote - An example
 In Mote and MQTT you can publish messages like so:
-`topic=light/bedroom/set_on, data=1, retain=False`
+```
+topic=light/bedroom/set_on, data=1, retain=False
+```
 This might be used to turn on a bedroom light.
 
 After the light turns on, it may respond with a publish that looks like:
-`topic=light/bedroom/is_on, data=1, retain=True`
+```
+topic=light/bedroom/is_on, data=1, retain=True
+```
 and this message will be retained in the database for any interested clients.
 
 A webapp might subscribe to the topic `light/+/is_on` to get a list of lights that are on. The response from the server is where Mote starts to differ from MQTT.  A typical MQTT server would respond with multiple separate publish messages/packets, and one might be `topic=light/bedroom/is_on, data=1, qos=1` to indicate the state of the bedroom light, and you might have another for `light/livingroom/is_on`, etc....
