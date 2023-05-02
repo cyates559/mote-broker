@@ -94,6 +94,8 @@ class Broker:
                 if rows:
                     await self.subscription_lock.acquire()
                     await self.process_rows(rows)
+            except KeyboardInterrupt:
+                return
             except:
                 log.traceback()
             finally:
