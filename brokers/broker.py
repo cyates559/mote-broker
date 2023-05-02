@@ -93,8 +93,7 @@ class Broker:
             try:
                 rows = await self.broadcast_queue.get()
                 if rows:
-                    async with self.subscription_lock.acquire():
-                        await self.subscription_lock.acquire()
+                    async with self.subscription_lock:
                         await self.process_rows(rows)
             except CancelledError:
                 raise
