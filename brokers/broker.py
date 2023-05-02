@@ -16,6 +16,7 @@ class Broker:
     instance: Any
     tree: RecursiveDefaultDict
     main_task: Task
+    running = True
 
     def __new__(cls, *args, **kwargs):
         self = Broker.instance = super().__new__(cls, *args, **kwargs)
