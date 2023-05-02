@@ -1,4 +1,4 @@
-# mote-broker
+# Mote Broker
 
 Mote is an expansion/modification of the MQTT protocol.  You can read more about MQTT at https://mqtt.org/.
 
