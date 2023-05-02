@@ -48,4 +48,24 @@ data={
 note the `tree` flag to indicate that the payload contains a tree that should get spead into many messages (sometimes called rows)
 
 # Performance
-The mote-broker uses trees and recursion to allow wide spanning subscriptions with many inflight messages being distributed to many different devices of varying types.  
+The mote-broker uses trees and recursion to allow wide spanning subscriptions with many inflight messages being distributed to many different devices of varying types.  It is designed to scale as linearly as possible in terms of number of wildcards in both subscriptions and publish messages.  A separate process is responsible for retaining messages in a database, and as such retaining happens as quickly as possible while also not impacting performance whatsoever.
+
+# Installation/Setup
+Mote broker has been designed to have as few dependencies as possible
+It has been tested with `python3.8` and above, it should have no issue running on anything that can run python.  For now, you'll need to install `python3-venv` to get working, and you may need other packages to get that working (I'll add them here if I become aware of them.
+
+Once you have `python3-venv`, you can take the following steps to get setup:
+```
+cd mote-broker
+python3 -m venv venv
+source activate
+pip install -r requirements.txt
+```
+
+# Running
+```
+ source activate
+ python app.py
+ ```
+
+```
