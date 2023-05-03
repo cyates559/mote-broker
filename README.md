@@ -51,8 +51,7 @@ data={
 ```
 note the `tree` flag to indicate that the payload contains a tree that should get spead into many messages (sometimes called rows)
 
-## Performance
-The mote-broker uses trees and recursion to allow wide spanning subscriptions with many inflight messages being distributed to many different devices of varying types.  It is designed to scale as linearly as possible in terms of number of wildcards in both subscriptions and publish messages.  A separate process is responsible for retaining messages in a database, and as such retaining happens as quickly as possible while also not impacting performance whatsoever.
+
 
 ## Installation/Setup
 Mote broker has been designed to have as few dependencies as possible
@@ -73,7 +72,8 @@ python admin.py migrate
  python app.py
 ```
 
-## How it works
-
+## Performance
+The mote-broker uses trees and recursion to allow wide spanning subscriptions with many inflight messages being distributed to many different devices of varying types.  It is designed to scale as linearly as possible in terms of number of wildcards in both subscriptions and publish messages.  A separate process is responsible for retaining messages in a database, and as such retaining happens as quickly as possible while also not impacting performance whatsoever.
+ 
 ### The Message Loop
 At the heart of an MQTT broker is the message loop.  Instead of processing one message at a time, with Mote, the broker's message loop processes lists of messages (or rows). When the Mote broker recieves a publish with the `tree` flag, it can recurse through that tree and turn it into a list of rows and put the entire list on the message loop.  Whenever a new list of rows is added to the message loop, it can recurse through a topic tree of current subscriptions and can build a single message for each subscription to send back to each interested client.  In this regard, Mote broker is a tree multiplexer, it can take one tree as input, and transform the input into many output formats.
