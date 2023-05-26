@@ -24,10 +24,7 @@ def flatten_message_into_rows(
     elif node == MANY_CARD:
         if not next_topic:
             flags = data.pop(LEAF_KEY, None)
-            results = [
-                (base + [key], val.encode(), qos)
-                for key, val in data.items()
-            ]
+            results = [(base + [key], val.encode(), qos) for key, val in data.items()]
             if flags == MANY_CARD:
                 # using this flag means the keys in our retained tree should
                 # match the keys in the retained tree once we are done
@@ -43,13 +40,15 @@ def flatten_message_into_rows(
         else:
             result = []
             for key, val in data.items():
-                result.extend(flatten_message_into_rows(
-                    topic=next_topic,
-                    data=val,
-                    qos=qos,
-                    base=base + [key],
-                    tree=tree.get(key, {}),
-                ))
+                result.extend(
+                    flatten_message_into_rows(
+                        topic=next_topic,
+                        data=val,
+                        qos=qos,
+                        base=base + [key],
+                        tree=tree.get(key, {}),
+                    )
+                )
             return result
     elif not next_topic:
         return [(base + topic, data.encode(), qos)]
@@ -59,5 +58,5 @@ def flatten_message_into_rows(
             data=data,
             qos=qos,
             base=base + [node],
-            tree=tree.get(node, {})
+            tree=tree.get(node, {}),
         )

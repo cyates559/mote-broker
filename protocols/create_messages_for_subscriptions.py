@@ -26,7 +26,9 @@ def build_message_data(leaf_rows: list, base: list, wildcards: bool):
         return leaf_rows[-1][1]
 
 
-def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: list, depth=0, wildcards=False):
+def _create_messages_for_subscriptions(
+    subscriptions: dict, rows: list, base: list, depth=0, wildcards=False
+):
     """
     Return a list of tuples of ([(client, qos), ...], topic, data)
     """
@@ -50,11 +52,13 @@ def _create_messages_for_subscriptions(subscriptions: dict, rows: list, base: li
                 base,
                 wildcards,
             )
-            messages.append((
-                branch,
-                base,
-                response_data,
-            ))
+            messages.append(
+                (
+                    branch,
+                    base,
+                    response_data,
+                )
+            )
         else:
             new_wildcards = wildcards
             if filter_node == MANY_CARD:

@@ -1,5 +1,5 @@
 import dataclasses
-from functools import cached_property
+from functools import cached_property, partial
 
 from asgiref.sync import sync_to_async
 
@@ -18,9 +18,9 @@ class MoteBroker(Broker):
     mqtt_port: int = 1993
     ws_port: int = 53535
     log_info: callable = print
-    log_debug: callable = print_in_green
-    log_warn: callable = print_in_yellow
-    log_error: callable = print_in_red
+    log_debug: callable = partial(print_in_green, "[DEBUG]")
+    log_warn: callable = partial(print_in_yellow, "[WARN]")
+    log_error: callable = partial(print_in_red, "[ERROR]")
 
     @cached_property
     def ssl_context(self):

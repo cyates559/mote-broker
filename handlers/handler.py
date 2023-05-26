@@ -52,6 +52,7 @@ class PacketFuture:
 class Handler(Client, ReaderWriter):
     reader_timeout: float
     last_will: IncomingMessage
+    active: bool = True
 
     def get_packet_id(self):
         i = 0
@@ -289,7 +290,7 @@ class Handler(Client, ReaderWriter):
             raise UnexpectedPacketType(packet)
 
     async def reader_loop(self):
-        while True:
+        while self.active:
             await self.check_running_tasks()
             packet = await wait_for(
                 self.read_next_packet(),

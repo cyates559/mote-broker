@@ -1,13 +1,24 @@
 from abc import abstractmethod
+from collections import deque
 from functools import cached_property
-from asyncio import Queue, get_event_loop, ensure_future, Task, CancelledError, Lock
+from asyncio import (
+    Queue,
+    get_event_loop,
+    ensure_future,
+    Task,
+    CancelledError,
+    Lock,
+    wait,
+)
 from typing import Any
 
 from models.client import Client
 from logger import log
 from models.messages import IncomingMessage, OutgoingMessage
 from models.topic import Topic
-from protocols.create_messages_for_subscriptions import create_messages_for_subscriptions
+from protocols.create_messages_for_subscriptions import (
+    create_messages_for_subscriptions,
+)
 from protocols.filter_tree import filter_tree_with_topic
 from utils.recursive_default_dict import RecursiveDefaultDict
 
@@ -58,6 +69,10 @@ class Broker:
     def subscription_lock(self) -> Lock:
         return Lock(loop=self.event_loop)
 
+    @cached_property
+    def futures(self) -> deque:
+        return deque()
+
     @classmethod
     def start(cls, *args, **kwargs):
         # noinspection PyArgumentList
@@ -91,13 +106,26 @@ class Broker:
     async def main_loop(self):
         while self.running:
             try:
+                while self.futures and self.futures[0].done():
+                    future = self.futures.popleft()
+                    future.result()
+
                 rows = await self.broadcast_queue.get()
                 if rows:
+                    log.debug("Pulled", len(rows), "Rows")
                     async with self.subscription_lock:
-                        await self.process_rows(rows)
+                        log.debug("Processing...")
+                        future = ensure_future(
+                            self.process_rows(rows),
+                            loop=self.event_loop,
+                        )
+                        self.futures.append(future)
+                    log.debug("Done")
             except CancelledError:
+                if self.futures:
+                    await wait(self.futures, loop=self.event_loop)
                 raise
-            except:
+            except Exception:
                 if self.running:
                     log.traceback()
 
@@ -106,6 +134,7 @@ class Broker:
             self.subscriptions,
             rows,
         )
+        log.debug(len(messages), "Outgoing")
         for client_list, topic_nodes, data in messages:
             topic = str(Topic.from_nodes(topic_nodes))
             for client_id, qos in client_list.items():
@@ -130,9 +159,7 @@ class Broker:
             rows = [message.as_single_row()]
         await self.broadcast_queue.put(rows)
 
-    async def subscribe(
-        self, client: Client, topic_str: str, qos: int, sync: bool
-    ):
+    async def subscribe(self, client: Client, topic_str: str, qos: int, sync: bool):
         topic = Topic.from_str(topic_str)
         if sync:
             tree_item = filter_tree_with_topic(

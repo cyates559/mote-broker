@@ -5,7 +5,9 @@ from protocols.is_node_static import is_node_static
 from utils.tree_item import TreeItem, empty
 
 
-def get_applicable_rows(topic: list, data: bytes, qos: int, base: list, tree: TreeItem, found_wildcard=False) -> list:
+def get_applicable_rows(
+    topic: list, data: bytes, qos: int, base: list, tree: TreeItem, found_wildcard=False
+) -> list:
     """
     Parse an incoming message into one or more rows with matching
     payloads; Topics are cherry-picked from a retained tree
@@ -60,5 +62,5 @@ def get_applicable_rows(topic: list, data: bytes, qos: int, base: list, tree: Tr
             qos=qos,
             base=base + [node],
             tree=branch,
-            found_wildcard=found_wildcard
+            found_wildcard=found_wildcard,
         )
