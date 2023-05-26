@@ -112,15 +112,12 @@ class Broker:
 
                 rows = await self.broadcast_queue.get()
                 if rows:
-                    log.debug("Pulled", len(rows), "Rows")
                     async with self.subscription_lock:
-                        log.debug("Processing...")
                         future = ensure_future(
                             self.process_rows(rows),
                             loop=self.event_loop,
                         )
                         self.futures.append(future)
-                    log.debug("Done")
             except CancelledError:
                 if self.futures:
                     await wait(self.futures, loop=self.event_loop)
@@ -134,7 +131,6 @@ class Broker:
             self.subscriptions,
             rows,
         )
-        log.debug(len(messages), "Outgoing")
         for client_list, topic_nodes, data in messages:
             topic = str(Topic.from_nodes(topic_nodes))
             for client_id, qos in client_list.items():
