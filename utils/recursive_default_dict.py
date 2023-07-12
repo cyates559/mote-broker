@@ -56,6 +56,10 @@ class RecursiveDefaultDict(defaultdict):
             return self[node][LEAF_KEY]
 
     def __truediv__(self, path: list):
+        """
+        Return the value at the end of the path if the path can be followed all the way to the end,
+        otherwise return None
+        """
         node = path[0]
         next_path = path[1:]
         if next_path:
