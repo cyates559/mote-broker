@@ -4,13 +4,9 @@ from collections import defaultdict
 from models.constants import LEAF_KEY
 
 
-def NoneType():
-    return None
-
-
 @dataclasses.dataclass
 class RecursiveDefaultDict(defaultdict):
-    default_type: callable = NoneType
+    default_type: callable = lambda: None
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.default_type})"
@@ -58,14 +54,14 @@ class RecursiveDefaultDict(defaultdict):
     def __truediv__(self, path: list):
         """
         Return the value at the end of the path if the path can be followed all the way to the end,
-        otherwise return None
+        otherwise return the default type
         """
         node = path[0]
         next_path = path[1:]
         if next_path:
             branch = self[node]
             if branch is None:
-                return None
-            return self[node] / next_path
+                return RecursiveDefaultDict(default_type=self.default_type)
+            return branch / next_path
         else:
             return self[node]
