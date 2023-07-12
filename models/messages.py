@@ -28,7 +28,7 @@ class IncomingMessage:
 
     def flatten_into_rows(self, tree) -> list:
         data = treeify(self.data.decode())
-        flags = data.pop(LEAF_KEY) if isinstance(data, dict) else None
+        flags = data.pop(LEAF_KEY, None) if isinstance(data, dict) else None
         return flatten_message_into_rows(
             self.topic.node_list,
             data,
