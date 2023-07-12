@@ -63,6 +63,9 @@ class RecursiveDefaultDict(defaultdict):
         node = path[0]
         next_path = path[1:]
         if next_path:
+            branch = self[node]
+            if branch is None:
+                return None
             return self[node] / next_path
         else:
             return self[node]
