@@ -1,7 +1,7 @@
 import dataclasses
 from json import loads as treeify
 
-from models.constants import TOPIC_SEP
+from models.constants import LEAF_KEY, TOPIC_SEP
 from models.topic import Topic
 from packet.connect import ConnectPacket
 from packet.publish import PublishPacket
@@ -28,7 +28,7 @@ class IncomingMessage:
 
     def flatten_into_rows(self, tree) -> list:
         data = treeify(self.data.decode())
-        flags = data.pop(TOPIC_SEP) if isinstance(data, dict) else None
+        flags = data.pop(LEAF_KEY) if isinstance(data, dict) else None
         return flatten_message_into_rows(
             self.topic.node_list,
             data,
@@ -47,7 +47,7 @@ class IncomingMessage:
         if retain:
             last = raw_topic[-1]
             topic = raw_topic
-            if last == "/":
+            if last == TOPIC_SEP:
                 topic = topic[:-1]
                 tree = True
             else:

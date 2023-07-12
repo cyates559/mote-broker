@@ -27,7 +27,8 @@ def flatten_message_into_rows(
             results = [(base + [key], val.encode(), qos) for key, val in data.items()]
             if flags == MANY_CARD:
                 # using this flag means the keys in our retained tree should
-                # match the keys in the retained tree once we are done
+                # match the keys in the input tree once we are done
+                # NOTE: (for now) this only works when the last node in the topic is +
                 for key, val in tree.items():
                     if key == LEAF_KEY:
                         continue
