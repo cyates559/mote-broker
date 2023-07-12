@@ -1,6 +1,7 @@
 import dataclasses
 from json import loads as treeify
 
+from models.constants import TOPIC_SEP
 from models.topic import Topic
 from packet.connect import ConnectPacket
 from packet.publish import PublishPacket
@@ -27,12 +28,14 @@ class IncomingMessage:
 
     def flatten_into_rows(self, tree) -> list:
         data = treeify(self.data.decode())
+        flags = data.pop(TOPIC_SEP) if isinstance(data, dict) else None
         return flatten_message_into_rows(
             self.topic.node_list,
             data,
             self.qos,
             [],
             tree,
+            flags,
         )
 
     @classmethod

@@ -12,12 +12,12 @@ def flatten_message_into_rows(
     qos: int,
     base: list,
     tree: RecursiveDefaultDict,
+    flags: str,
 ) -> list:
     """
     Parse a topic with wildcards into multiple messages
     with payloads cherry-picked from the incoming data tree
     """
-    flags = data.pop(LEAF_KEY, None)
     node = topic[0]
     next_topic = topic[1:]
     if node == EVERYTHING_CARD:
@@ -47,6 +47,7 @@ def flatten_message_into_rows(
                         qos=qos,
                         base=base + [key],
                         tree=tree.get(key, {}),
+                        flags=flags,
                     )
                 )
             return result
@@ -59,4 +60,5 @@ def flatten_message_into_rows(
             qos=qos,
             base=base + [node],
             tree=tree.get(node, {}),
+            flags=flags,
         )
