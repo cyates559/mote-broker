@@ -39,14 +39,12 @@ class IncomingMessage:
     def from_raw_data(cls, raw_topic: str, data: bytes, qos: int, retain: bool):
         """
         The tree flag is normally False unless
-        the topic has a trailing boob;
-        The update flag is normally True unless
         the topic has a trailing slash
         """
         if retain:
-            first = raw_topic[-1]
+            last = raw_topic[-1]
             topic = raw_topic
-            if first == "/":
+            if last == "/":
                 topic = topic[:-1]
                 tree = True
             else:

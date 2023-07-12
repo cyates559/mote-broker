@@ -60,4 +60,5 @@ class MoteBroker(Broker):
         self.persistence_manager.retain(*rows)
         for topic_nodes, data, _ in rows:
             branch = self.tree / topic_nodes
-            branch.leaf = data
+            if branch is not None:
+                branch.leaf = data

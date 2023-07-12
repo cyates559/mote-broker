@@ -54,14 +54,14 @@ class RecursiveDefaultDict(defaultdict):
     def __truediv__(self, path: list):
         """
         Return the value at the end of the path if the path can be followed all the way to the end,
-        otherwise return the default type
+        otherwise return None
         """
         node = path[0]
         next_path = path[1:]
         if next_path:
             branch = self[node]
             if branch is None:
-                return RecursiveDefaultDict(default_type=self.default_type)
+                return None
             return branch / next_path
         else:
             return self[node]

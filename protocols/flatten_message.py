@@ -17,13 +17,13 @@ def flatten_message_into_rows(
     Parse a topic with wildcards into multiple messages
     with payloads cherry-picked from the incoming data tree
     """
+    flags = data.pop(LEAF_KEY, None)
     node = topic[0]
     next_topic = topic[1:]
     if node == EVERYTHING_CARD:
         raise InvalidEverythingCard
     elif node == MANY_CARD:
         if not next_topic:
-            flags = data.pop(LEAF_KEY, None)
             results = [(base + [key], val.encode(), qos) for key, val in data.items()]
             if flags == MANY_CARD:
                 # using this flag means the keys in our retained tree should
