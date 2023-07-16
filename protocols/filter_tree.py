@@ -18,7 +18,7 @@ def filter_tree_with_topic(
     if node == EVERYTHING_CARD:
         if next_topic is None:
             return tree
-        raise InvalidEverythingCard
+        raise InvalidEverythingCard(next_topic)
     elif node == MANY_CARD:
         result = {}
         if not next_topic:
