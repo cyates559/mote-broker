@@ -30,8 +30,8 @@ FOREGROUND_CYAN = Format(FOREGROUND_SELECTOR, 6)
 FOREGROUND_WHITE = Format(FOREGROUND_SELECTOR, 7)
 
 
-def printf(format: Format, *args, **kwargs):
-    print(format.slug, end="")
+def printf(fmt: Format, *args, **kwargs):
+    print(fmt.slug, end="")
     print(*args, **kwargs)
     print(RESET, end="")
 

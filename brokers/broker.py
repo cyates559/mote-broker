@@ -1,58 +1,91 @@
-from abc import abstractmethod
+import dataclasses
 from collections import deque
-from functools import cached_property
+from functools import cached_property, partial
 from asyncio import (
     Queue,
     get_event_loop,
     ensure_future,
-    Task,
     CancelledError,
     Lock,
     wait,
 )
-from typing import Any
 
+from asgiref.sync import sync_to_async
+
+from brokers.context import BrokerContext
 from models.client import Client
 from logger import log
 from models.messages import IncomingMessage, OutgoingMessage
 from models.topic import Topic
+from persistence.manager import PersistenceManager
 from protocols.create_messages_for_subscriptions import (
     create_messages_for_subscriptions,
 )
 from protocols.filter_tree import filter_tree_with_topic
-from utils.recursive_default_dict import RecursiveDefaultDict
+from servers.mqtt_server import MQTTServer
+from servers.websocket_server import WebsocketServer
+from utils.stdout_log import print_in_yellow, print_in_green, print_in_red
 
 
-class Broker:
-    instance: Any
-    tree: RecursiveDefaultDict
-    main_task: Task
-    running = True
+@dataclasses.dataclass
+class Broker(BrokerContext):
+    host: str = "0.0.0.0"
+    mqtt_host: str = None
+    ws_host: str = None
+    mqtt_port: int = 1993
+    ws_port: int = 53535
+    log_info: callable = print
+    log_debug: callable = partial(print_in_green, "[DEBUG]")
+    log_warn: callable = partial(print_in_yellow, "[WARN]")
+    log_error: callable = partial(print_in_red, "[ERROR]")
 
-    def __new__(cls, *args, **kwargs):
-        self = Broker.instance = super().__new__(cls, *args, **kwargs)
-        self.main_task = None
-        self.subscriptions = RecursiveDefaultDict(default_type=dict)
-        self.clients = {}
-        return self
+    @cached_property
+    def ssl_context(self):
+        return None
 
-    @abstractmethod
+    @cached_property
+    def persistence_manager(self):
+        return PersistenceManager()
+
+    @staticmethod
+    async def load_tree():
+        return await sync_to_async(
+            PersistenceManager.load_tree,
+        )()
+
+    @cached_property
+    def ws_server(self):
+        return WebsocketServer(
+            host=self.ws_host or self.host,
+            port=self.ws_port,
+            ssl_context=self.ssl_context,
+        )
+
+    @cached_property
+    def mqtt_server(self):
+        return MQTTServer(
+            host=self.mqtt_host or self.host,
+            port=self.mqtt_port,
+            ssl_context=self.ssl_context,
+        )
+
+    async def create_context(self, main: callable):
+        with self.persistence_manager:
+            async with self.ws_server, self.mqtt_server:
+                await main()
+
     def retain_rows(self, rows: list):
-        pass
-
-    @abstractmethod
-    async def load_tree(self) -> RecursiveDefaultDict:
-        pass
+        self.persistence_manager.retain(*rows)
+        for topic_nodes, data, _ in rows:
+            branch = self.tree / topic_nodes
+            if branch is not None:
+                branch.leaf = data
 
     def add_client(self, client: Client):
         self.clients[client.id] = client
 
     def remove_client(self, client: Client):
         self.clients.pop(client.id)
-
-    @abstractmethod
-    async def create_context(self, main: callable):
-        pass
 
     async def shutdown(self):
         self.main_task.cancel()
