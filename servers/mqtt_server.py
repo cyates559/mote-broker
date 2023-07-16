@@ -1,7 +1,7 @@
 import asyncio
 from asyncio import StreamReader, StreamWriter
 
-from brokers.broker import Broker
+from brokers.context import BrokerContext as Broker
 from handlers.mqtt_handler import MQTTHandler
 from servers.server import Server
 

@@ -1,6 +1,6 @@
 import websockets
 
-from brokers.broker import Broker
+from brokers.context import BrokerContext as Broker
 from servers.server import Server
 from handlers.websocket_handler import WebsocketHandler
 

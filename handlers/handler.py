@@ -25,7 +25,7 @@ from packet.pubrec import PublishReceivedPacket
 from packet.pubrel import PublishReleasedPacket
 from packet.suback import SubscribeAcknowledgePacket
 from packet.subscribe import SubscribePacket
-from brokers.broker import Broker
+from brokers.context import BrokerContext as Broker
 from models.messages import IncomingMessage, OutgoingMessage
 from packet.unsub import UnsubscribePacket
 from packet.unsuback import UnsubscribeAcknowledgePacket
