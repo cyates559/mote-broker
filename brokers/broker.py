@@ -106,10 +106,7 @@ class Broker:
     async def main_loop(self):
         while self.running:
             try:
-                while self.futures and self.futures[0].done():
-                    future = self.futures.popleft()
-                    future.result()
-
+                await self.run_tasks()
                 rows = await self.broadcast_queue.get()
                 if rows:
                     async with self.subscription_lock:
@@ -125,6 +122,16 @@ class Broker:
             except Exception:
                 if self.running:
                     log.traceback()
+
+    async def run_tasks(self):
+        while self.futures and self.futures[0].done():
+            future = self.futures.popleft()
+            try:
+                future.result()
+            except CancelledError:
+                raise
+            except:
+                log.traceback()
 
     async def process_rows(self, rows: list):
         messages = create_messages_for_subscriptions(
