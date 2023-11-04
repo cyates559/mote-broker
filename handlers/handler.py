@@ -53,6 +53,7 @@ class Handler(Client, ReaderWriter):
     reader_timeout: float
     last_will: IncomingMessage
     active: bool = True
+    connection_override: bool = False
 
     def get_packet_id(self):
         i = 0
@@ -165,7 +166,7 @@ class Handler(Client, ReaderWriter):
             self.last_will = self.get_last_will(connect_packet)
             await acknowledge_packet.write(self)
             log.info(self, "connected")
-            Broker.instance.add_client(self)
+            await Broker.instance.add_client(self)
             await self.reader_loop()
         except SyncTimeoutError:
             log.info(f"Connection timed out for {self}")
@@ -175,6 +176,11 @@ class Handler(Client, ReaderWriter):
             log.traceback()
         finally:
             await self.handle_disconnected()
+
+    async def override_connection(self):
+        self.connection_override = True
+        self.active = False
+        await self.close()
 
     @staticmethod
     def get_last_will(packet: ConnectPacket):
@@ -256,6 +262,8 @@ class Handler(Client, ReaderWriter):
                 continue
             await task.cancel()
         await Broker.instance.unsubscribe(self, *self.subscriptions)
+        if self.connection_override:
+            return
         Broker.instance.remove_client(self)
         if self.last_will is not None:
             await Broker.instance.publish(self.last_will)
@@ -326,5 +334,5 @@ class Handler(Client, ReaderWriter):
         pass
 
     @abstractmethod
-    def close(self):
+    async def close(self):
         pass

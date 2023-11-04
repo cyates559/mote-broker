@@ -12,7 +12,10 @@ class PersistenceManager:
         self.condition = Condition(lock=Lock())
         self.running = Manager().list([False])
         self.events = Manager().list()
-        self.process = Process(
+        self.process = self.create_loop_process()
+
+    def create_loop_process(self):
+        return Process(
             target=loop, args=(self.running, self.condition, self.events)
         )
 
@@ -34,12 +37,6 @@ class PersistenceManager:
             pointer["/"] = message.data
         return results
 
-    def clear(self, topic: str):
-        topic = self.parse_topic(topic)
-        with self.condition:
-            self.events.append((topic, None, 0))
-            self.condition.notify()
-
     def retain(self, *messages: (list, bytes, int)):
         with self.condition:
             self.events.extend(messages)
@@ -54,7 +51,7 @@ class PersistenceManager:
     def name(self):
         return self.__class__.__name__
 
-    def run(self):
+    def start(self):
         log.info(f"Starting {self.name}...", end="")
         self.running[0] = True
         self.process.start()
@@ -71,7 +68,7 @@ class PersistenceManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
 
-    __enter__ = run
+    __enter__ = start
 
 
 def loop(running, condition, events):

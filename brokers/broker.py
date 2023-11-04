@@ -81,7 +81,10 @@ class Broker(BrokerContext):
             if branch is not None:
                 branch.leaf = data
 
-    def add_client(self, client: Client):
+    async def add_client(self, client: Client):
+        prev_client = self.clients.get(client.id)
+        if prev_client:
+            await prev_client.override_connection()
         self.clients[client.id] = client
 
     def remove_client(self, client: Client):
@@ -114,17 +117,21 @@ class Broker(BrokerContext):
 
     def run(self):
         try:
-            self.main_task = ensure_future(
-                self.main(),
-                loop=self.event_loop,
-            )
+            self.start_main_task()
             self.event_loop.run_forever()
         except (KeyboardInterrupt, InterruptedError):
             log.info(end="\r")
             log.info("Interrupted!")
             self.event_loop.run_until_complete(self.shutdown())
 
-    async def main(self):
+    def start_main_task(self):
+        self.main_task = ensure_future(
+            self.run_main_loop(),
+            loop=self.event_loop,
+        )
+        return self.main_task
+
+    async def run_main_loop(self):
         try:
             log.info("Loading message tree...", end="")
             self.tree = await self.load_tree()
