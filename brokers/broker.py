@@ -1,4 +1,5 @@
 import dataclasses
+import sys
 from queue import Queue
 from functools import partial, cached_property
 from threading import Lock
@@ -12,7 +13,7 @@ from models.client import Client
 from models.messages import IncomingMessage, OutgoingMessage
 from models.topic import Topic
 from servers.socket import SocketServer
-from servers.websocket.server import WebsocketServer
+from servers.websocket.handler import WebsocketHandler
 from utils.field import default_factory
 from utils.recursive_default_dict import RecursiveDefaultDict
 from utils.stdout_log import print_in_yellow, print_in_green, print_in_red, print_in_magenta
@@ -38,14 +39,17 @@ class Broker(BrokerContext):
 
     @cached_property
     def websocket_server(self):
-        return WebsocketServer(
+        return SocketServer(
+            name="WebSocket Server",
             host=self.ws_host or self.host,
             port=self.ws_port,
+            handler_class=WebsocketHandler,
         )
 
     @cached_property
     def tcp_server(self):
         return SocketServer(
+            name="TCP Server",
             host=self.tcp_host or self.host,
             port=self.tcp_port,
         )

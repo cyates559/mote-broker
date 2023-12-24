@@ -8,13 +8,10 @@ from logger import log
 
 @dataclasses.dataclass
 class Server:
+    name: str
     host: str
     port: int
     alive: bool = False
-
-    @cached_property
-    def name(self):
-        return self.__class__.__name__
 
     @cached_property
     def thread(self):

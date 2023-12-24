@@ -1,6 +1,6 @@
 import dataclasses
 import errno
-from socket import socket
+from socket import socket, timeout
 from functools import cached_property
 
 from logger import log
@@ -100,7 +100,9 @@ class Frame:
             else:
                 payload = sock.recv(payload_len)
         except IndexError:
-            log.debug("Unable to read")
+            sock.close()
+            raise ConnectionError("Unable to read")
+        except timeout:
             sock.close()
             raise ConnectionError("Unable to read")
         except ConnectionError:

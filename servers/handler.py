@@ -86,11 +86,7 @@ class Handler(Client, ReaderWriter):
 
     @cached_property
     def reader_thread(self):
-        return Thread(target=self.reader_loop)
-
-    @cached_property
-    def handler_threads(self):
-        return []
+        return Thread(target=self.reader_loop, daemon=True)
 
     @cached_property
     def packet_map(self):
@@ -297,7 +293,7 @@ class Handler(Client, ReaderWriter):
     def handle_packet(self, packet):
         handler = self.packet_map.get(packet.__class__)
         if handler:
-            Thread(target=handler, args=[packet]).start()
+            Thread(target=handler, args=[packet], daemon=True).start()
         elif isinstance(packet, PacketWithId) and self.packet_notify(packet):
             return
         else:

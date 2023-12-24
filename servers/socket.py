@@ -1,7 +1,6 @@
 import dataclasses
 from functools import cached_property
-from socket import socket, AF_INET, SOCK_STREAM
-from threading import Thread
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR, SOL_SOCKET, SO_REUSEADDR
 from typing import Type
 
 from logger import log
@@ -18,7 +17,13 @@ class SocketHandler(Handler):
         self.sock.send(data)
 
     def read(self, size):
-        return self.sock.recv(size)
+        try:
+            data = self.sock.recv(size)
+            if data:
+                return data
+        except OSError:
+            raise ConnectionError from OSError
+        raise ConnectionError
 
     def get_host_port_tuple(self):
         return self.sock.getsockname()
@@ -33,9 +38,15 @@ class SocketHandler(Handler):
         #     except:
         #         pass
         self.alive = False
+        try:
+            self.sock.shutdown(SHUT_RDWR)
+        except OSError as e:
+            if e.errno not in [9, 107]:
+                raise
         self.sock.close()
 
 
+@dataclasses.dataclass
 class SocketServer(Server):
     handler_class: Type[Handler] = SocketHandler
 
@@ -48,6 +59,11 @@ class SocketServer(Server):
         while self.clients:
             self.clients.pop().disconnect()
         stop_socket(self.host, self.port)
+        try:
+            self.server.shutdown(SHUT_RDWR)
+        except OSError as e:
+            if e.errno not in [9, 57, 107]:
+                raise
         self.server.close()
 
     @cached_property
@@ -60,11 +76,16 @@ class SocketServer(Server):
 
     def loop(self):
         self.alive = True
-        self.server.bind((self.host, self.port))
+        self.server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        try:
+            self.server.bind((self.host, self.port))
+        except OSError:
+            log.error("Unable to bind", self.host, self.port)
+            log.traceback()
+            return
         self.server.listen()
         while self.alive:
             client_socket, address = self.server.accept()
             if not self.alive:
                 break
-            log.info(f"{self.name} New Connection: {client_socket.getsockname()}")
-            Thread(target=self.handle_client, args=[client_socket]).start()
+            self.handle_client(client_socket)
