@@ -8,8 +8,8 @@ from packet.types.type import PacketType
 class PacketStaticInt(PacketType):
     size: int
 
-    async def read(self, handler, kwargs):
-        return await handler.read_int(self.size), self.size
+    def read(self, handler, kwargs):
+        return handler.read_int(self.size), self.size
 
     def to_bytes(self, value: int):
         if self.size == 1:

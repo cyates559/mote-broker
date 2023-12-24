@@ -11,8 +11,8 @@ str_size = static_int(2)
 class PacketDynamicStr(PacketType):
     optional: bool = False
 
-    async def read(self, handler, kwargs):
-        r = await handler.decode_str(optional=self.optional)
+    def read(self, handler, kwargs):
+        r = handler.decode_str()
         return r
 
     @classmethod

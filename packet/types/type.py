@@ -6,7 +6,7 @@ class PacketType:
     is_enabled = enabled_default
 
     @classmethod
-    async def read(cls, handler, kwargs):
+    def read(cls, handler, kwargs):
         pass
 
     @classmethod

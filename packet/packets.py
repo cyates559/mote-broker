@@ -1,3 +1,4 @@
+from packet.auth import AuthPacket
 from packet.connack import ConnectAcknowledgePacket
 from packet.connect import ConnectPacket
 from packet.pingreq import PingRequestPacket
@@ -27,6 +28,7 @@ all_packets = [
     UnsubscribeAcknowledgePacket,
     PingRequestPacket,
     PingResponsePacket,
+    AuthPacket,
 ]
 
 

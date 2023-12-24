@@ -1,5 +1,7 @@
+import sys
 from dataclasses import dataclass
 from functools import partial
+from threading import Lock
 
 CONTROL_SEQUENCE = "\033["
 DELIMITER = "m"
@@ -29,11 +31,32 @@ FOREGROUND_MAGENTA = Format(FOREGROUND_SELECTOR, 5)
 FOREGROUND_CYAN = Format(FOREGROUND_SELECTOR, 6)
 FOREGROUND_WHITE = Format(FOREGROUND_SELECTOR, 7)
 
+lock = Lock()
 
-def printf(fmt: Format, *args, **kwargs):
-    print(fmt.slug, end="")
-    print(*args, **kwargs)
-    print(RESET, end="")
+
+def printf(fmt: Format, *args, end="\n", **kwargs):
+    with lock:
+        sys.stdout.write(fmt.slug)
+        first = True
+        for arg in args:
+            if first:
+                first = False
+            else:
+                sys.stdout.write(" ")
+            sys.stdout.write(str(arg))
+        first = True
+        for key, arg in kwargs.items():
+            if first:
+                first = False
+            else:
+                sys.stdout.write(" ")
+            sys.stdout.write(str(key))
+            sys.stdout.write("=")
+            sys.stdout.write(str(arg))
+        sys.stdout.write(RESET)
+        if end is not None:
+            sys.stdout.write(end)
+        sys.stdout.flush()
 
 
 print_in_red = partial(printf, FOREGROUND_RED)

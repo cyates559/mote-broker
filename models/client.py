@@ -8,7 +8,7 @@ class Client:
     id: str
 
     @abstractmethod
-    async def handle_message(self, message: OutgoingMessage):
+    def send_message(self, message: OutgoingMessage):
         pass
 
     @cached_property

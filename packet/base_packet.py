@@ -26,7 +26,7 @@ class Packet(Payload):
         super().__init__(**kwargs, flags=self.flags)
 
     @classmethod
-    async def read_payload(cls, handler, flags_int, length) -> (dict, int):
+    def read_payload(cls, handler, flags_int, length) -> (dict, int):
         kwargs = {"length": length}
         flag_class = cls.__annotations__.get("flag_class")
         if flag_class:
@@ -34,7 +34,7 @@ class Packet(Payload):
         byte_count = 0
         for name, packet_type in cls.fields.items():
             if packet_type.is_enabled(None, **kwargs):
-                kwargs[name], read_length = await packet_type.read(handler, kwargs)
+                kwargs[name], read_length = packet_type.read(handler, kwargs)
                 byte_count += read_length
                 kwargs["length"] -= read_length
         kwargs["length"] = length
@@ -71,14 +71,14 @@ class Packet(Payload):
         return header_bytes + payload
 
     @classmethod
-    async def read(cls, handler, flags=None):
+    def read(cls, handler, flags=None):
         if flags is None:
-            msg_type, flags = await handler.decode_header()
+            msg_type, flags = handler.decode_header()
             cur_class = handler.infer_packet_class(msg_type)
             if cls != cur_class:
                 raise PacketMismatchError(cls, cur_class)
-        length = await handler.decode_packet_length()
-        kwargs, bytes_read = await cls.read_payload(handler, flags, length)
+        length = handler.decode_packet_length()
+        kwargs, bytes_read = cls.read_payload(handler, flags, length)
         # noinspection PyArgumentList
         result = cls(**kwargs)
         client_id = result.__dict__.get("client_id")
@@ -87,10 +87,9 @@ class Packet(Payload):
         log.info("Read", result, "from", client_id)
         return result
 
-    async def write(self, handler):
+    def write(self, handler):
         data = self.to_bytes()
         handler.write(data)
-        await handler.drain()
         log.info("Wrote", self, "to", handler.id)
 
 

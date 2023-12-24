@@ -9,19 +9,19 @@ from packet.types.type import PacketType
 class PacketDynamicList(PacketType):
     type: Union[PacketType, Type[Payload]]
 
-    async def read(self, handler, kwargs):
+    def read(self, handler, kwargs):
         result = []
         byte_count = 0
         while kwargs["length"] > 0:
             if isinstance(self.type, PacketType):
-                item, read_length = await self.type.read(handler, kwargs)
+                item, read_length = self.type.read(handler, kwargs)
                 byte_count += read_length
                 kwargs["length"] -= read_length
                 result.append(item)
             else:
                 sub_kwargs = {}
                 for name, subtype in self.type.fields.items():
-                    sub_kwargs[name], read_length = await subtype.read(handler, kwargs)
+                    sub_kwargs[name], read_length = subtype.read(handler, kwargs)
                     byte_count += read_length
                     kwargs["length"] -= read_length
                 # noinspection PyArgumentList

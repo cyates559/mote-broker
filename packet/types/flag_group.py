@@ -43,6 +43,6 @@ class PacketFlagGroup(PacketStaticInt):
         return cls(data, kwargs)
 
     @classmethod
-    async def read(cls, handler, kwargs):
-        f = await handler.read_int(cls.size)
+    def read(cls, handler, kwargs):
+        f = handler.read_int(cls.size)
         return cls.from_int(f), cls.size

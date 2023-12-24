@@ -8,8 +8,8 @@ from packet.types.static_int import PacketStaticInt
 class PacketIdType(PacketStaticInt):
     size: int = 2
 
-    async def read(self, handler, kwargs):
-        raw_data = await handler.try_read(self.size)
+    def read(self, handler, kwargs):
+        raw_data = handler.read(self.size)
         data = unpack("!H", raw_data)
         return data[0], self.size
 
