@@ -44,15 +44,20 @@ class WebsocketHandler(SocketHandler):
 
     def write(self, payload: bytes):
         buffer = BytesIO(payload)
-        data = buffer.read(OUT_SIZE)
-        while data:
+        fin = False
+        n = buffer.read(OUT_SIZE)
+        opcode = OP_BYTES
+        while not fin:
+            data = n
+            n = buffer.read(OUT_SIZE)
+            fin = not n
             self.send(
-                opcode=OP_BYTES,
-                fin=True,
+                opcode=opcode,
+                fin=fin,
                 masked=False,
                 payload=data,
             )
-            data = buffer.read(OUT_SIZE)
+            opcode = OP_CONTINUATION
 
     def start_connection(self):
         upgrade_request = recv_until(self.sock, delimiter="\r\n\r\n")
