@@ -20,6 +20,9 @@ from utils.field import default_factory
 from utils.recv_until import recv_until
 
 
+OUT_SIZE = 2040
+
+
 @dataclasses.dataclass
 class WebsocketHandler(SocketHandler):
     sock: socket
@@ -40,12 +43,16 @@ class WebsocketHandler(SocketHandler):
         return self.buf.read(n)
 
     def write(self, payload: bytes):
-        self.send(
-            opcode=OP_BYTES,
-            fin=True,
-            masked=False,
-            payload=payload,
-        )
+        buffer = BytesIO(payload)
+        data = buffer.read(OUT_SIZE)
+        while data:
+            self.send(
+                opcode=OP_BYTES,
+                fin=True,
+                masked=False,
+                payload=data,
+            )
+            data = buffer.read(OUT_SIZE)
 
     def start_connection(self):
         upgrade_request = recv_until(self.sock, delimiter="\r\n\r\n")

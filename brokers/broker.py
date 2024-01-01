@@ -1,5 +1,4 @@
 import dataclasses
-import sys
 from queue import Queue
 from functools import partial, cached_property
 from threading import Lock
@@ -72,7 +71,8 @@ class Broker(BrokerContext):
             while self.running:
                 rows = self.broadcast_queue.get(block=True)
                 if rows:
-                    self.process_rows(rows)
+                    with self.subscription_lock:
+                        self.process_rows(rows)
 
     def add_client(self, client: Client):
         prev_client = self.clients.get(client.id)
@@ -127,12 +127,9 @@ class Broker(BrokerContext):
             )
             client.send_message(message)
 
-        self.subscription_lock.acquire()
-        try:
+        with self.subscription_lock:
             client_set = self.subscriptions << topic.node_list
             client_set[client.id] = qos
-        finally:
-            self.subscription_lock.release()
         return True
 
     def unsubscribe(self, client: Client, *topics: str):
