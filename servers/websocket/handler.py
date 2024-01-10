@@ -42,7 +42,7 @@ class WebsocketHandler(SocketHandler):
         self.buf = BytesIO(buffer)
         return self.buf.read(n)
 
-    def write(self, payload: bytes):
+    def send_bytes(self, payload: bytes):
         buffer = BytesIO(payload)
         fin = False
         n = buffer.read(OUT_SIZE)

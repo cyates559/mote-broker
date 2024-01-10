@@ -1,9 +1,11 @@
+import dataclasses
 from queue import Queue
 
 import mock
 import pytest
 
 from brokers.broker import Broker
+from models.client import Client
 from persistence.manager import PersistenceManager
 from servers.server import Server
 
@@ -20,7 +22,7 @@ def mock_broadcast_queue(broker):
 
 
 @pytest.fixture
-def patch_process_row_stop_server(broker):
+def patch_process_row__stop_server(broker):
     def process_rows(*_):
         broker.running = False
 
@@ -56,3 +58,25 @@ def patched_start_server():
 def patched_stop_server():
     with mock.patch.object(Server, "__exit__") as patched:
         yield patched
+
+
+@dataclasses.dataclass
+class MockClient(Client):
+    send_message = print
+    id: str
+
+
+@pytest.fixture
+def patched_client_send_message():
+    with mock.patch.object(MockClient, "send_message") as patched:
+        yield patched
+
+
+@pytest.fixture
+def mock_client1():
+    return MockClient(id="test_client_1")
+
+
+@pytest.fixture
+def mock_client():
+    return MockClient(id="test_client_2")

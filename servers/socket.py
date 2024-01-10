@@ -1,19 +1,29 @@
 import dataclasses
 from functools import cached_property
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR, SOL_SOCKET, SO_REUSEADDR
+from threading import Lock
 from typing import Type
 
 from logger import log
 from servers.handler import Handler
 from servers.server import Server
+from utils.field import default_factory
 from utils.stop_socket import stop_socket
 
 
 @dataclasses.dataclass
 class SocketHandler(Handler):
     sock: socket
+    outgoing_lock: Lock = default_factory(Lock)
 
     def write(self, data):
+        try:
+            with self.outgoing_lock:
+                self.send_bytes(data)
+        except (OSError, BrokenPipeError, ConnectionResetError):
+            raise ConnectionError
+
+    def send_bytes(self, data: bytes):
         self.sock.send(data)
 
     def read(self, size):
