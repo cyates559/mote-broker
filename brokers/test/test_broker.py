@@ -1,3 +1,6 @@
+import pytest
+
+
 class TestMainLoop:
     def test_main_loop(
         self,
@@ -35,3 +38,25 @@ class TestAddRemoveClient:
         broker.add_client(mock_client1)
         assert list(broker.clients.values()) == [mock_client1]
 
+    def test_remove_client(
+        self,
+        broker,
+        mock_client1,
+    ):
+        """
+        Removes a client from the list of connected clients
+        """
+        broker.add_client(mock_client1)
+        broker.remove_client(mock_client1)
+        assert list(broker.clients.values()) == []
+
+    def test_remove_client_fail(
+        self,
+        broker,
+        mock_client1,
+    ):
+        """
+        Raise KeyError if the client is not found
+        """
+        with pytest.raises(KeyError):
+            broker.remove_client(mock_client1)
