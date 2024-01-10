@@ -26,7 +26,12 @@ class TestMainLoop:
 class TestAddRemoveClient:
     def test_add_client(
         self,
+        broker,
+        mock_client1,
     ):
         """
         Adds a client to the list of connected clients
         """
+        broker.add_client(mock_client1)
+        assert list(broker.clients.values()) == [mock_client1]
+

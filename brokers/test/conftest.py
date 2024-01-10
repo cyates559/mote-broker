@@ -78,5 +78,5 @@ def mock_client1():
 
 
 @pytest.fixture
-def mock_client():
+def mock_client2():
     return MockClient(id="test_client_2")
