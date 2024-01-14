@@ -7,14 +7,16 @@ from typing import Type
 from logger import log
 from servers.handler import Handler
 from servers.server import Server
-from utils.field import default_factory
 from utils.stop_socket import stop_socket
 
 
 @dataclasses.dataclass
 class SocketHandler(Handler):
     sock: socket
-    outgoing_lock: Lock = default_factory(Lock)
+
+    @cached_property
+    def outgoing_lock(self):
+        return Lock()
 
     def write(self, data):
         try:

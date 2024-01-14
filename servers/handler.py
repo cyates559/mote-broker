@@ -26,6 +26,7 @@ from packet.suback import SubscribeAcknowledgePacket
 from packet.subscribe import SubscribePacket
 from packet.unsub import UnsubscribePacket
 from packet.unsuback import UnsubscribeAcknowledgePacket
+from utils.field import default_factory
 
 
 class TooManyPacketIds(Exception):
@@ -37,7 +38,7 @@ class PacketCondition:
     type_code: int
     id: int
     result: PacketWithId = None
-    condition: Condition = dataclasses.field(default_factory=Condition)
+    condition: Condition = default_factory(Condition)
 
     @cached_property
     def hash(self):
@@ -86,10 +87,6 @@ class Handler(Client, ReaderWriter):
         return self.get_host_port_tuple()
 
     @cached_property
-    def reader_thread(self):
-        return Thread(target=self.reader_loop, daemon=True)
-
-    @cached_property
     def packet_map(self):
         return {
             PingRequestPacket: self.handle_ping_request,
@@ -133,7 +130,7 @@ class Handler(Client, ReaderWriter):
         handler = cls(*args, **kwargs)
         handler.id = None
         handler.last_will = None
-        handler.reader_thread.start()
+        handler.start_threads()
         return handler
 
     @staticmethod
@@ -303,7 +300,17 @@ class Handler(Client, ReaderWriter):
     def start_connection(self):
         pass
 
-    def reader_loop(self):
+    def write_loop(self):
+        try:
+            while self.alive:
+                message = self.message_queue.get(block=True)
+                self.send_message(message)
+        except ConnectionError:
+            self.close()
+            if self.linked:
+                self.handle_disconnected()
+
+    def read_loop(self):
         try:
             self.start_connection()
             connect_packet = ConnectPacket.read(self)

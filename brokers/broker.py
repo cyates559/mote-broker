@@ -100,7 +100,7 @@ class Broker(BrokerContext):
                     qos=qos,
                     data=data,
                 )
-                client.send_message(message)
+                client.queue_message(message)
 
     def publish(self, message: IncomingMessage):
         if message.retain:
@@ -125,7 +125,7 @@ class Broker(BrokerContext):
                 qos=qos,
                 tree_item=tree_item,
             )
-            client.send_message(message)
+            client.queue_message(message)
 
         with self.subscription_lock:
             client_set = self.subscriptions << topic.node_list

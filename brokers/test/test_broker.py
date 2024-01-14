@@ -60,3 +60,8 @@ class TestAddRemoveClient:
         """
         with pytest.raises(KeyError):
             broker.remove_client(mock_client1)
+
+
+class TestProcessRows:
+    def test_process_rows(self, patched_create_messages):
+        pass

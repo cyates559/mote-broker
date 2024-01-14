@@ -1,5 +1,4 @@
 import dataclasses
-from queue import Queue
 
 import mock
 import pytest
@@ -80,3 +79,10 @@ def mock_client1():
 @pytest.fixture
 def mock_client2():
     return MockClient(id="test_client_2")
+
+
+@pytest.fixture
+def patched_create_messages():
+    target = "protocols.create_messages_for_subscriptions.create_messages_for_subscriptions"
+    with mock.patch(target) as patched:
+        yield patched
