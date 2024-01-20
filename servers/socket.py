@@ -30,12 +30,17 @@ class SocketHandler(Handler):
 
     def read(self, size):
         try:
-            data = self.sock.recv(size)
-            if data:
-                return data
+            cached_bytes = bytearray()
+            byte_count = 0
+            while byte_count < size:
+                buf = self.sock.recv(size)
+                if not buf:
+                    raise ConnectionError
+                cached_bytes.extend(buf)
+                byte_count += len(buf)
+            return bytes(cached_bytes)
         except OSError:
             raise ConnectionError from OSError
-        raise ConnectionError
 
     def get_host_port_tuple(self):
         return self.sock.getsockname()

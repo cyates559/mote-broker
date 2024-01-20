@@ -4,7 +4,7 @@ from packet.types.type import PacketType
 class PacketRemainingBytes(PacketType):
     def read(self, handler, kwargs):
         length = kwargs["length"]
-        if length == 0:
+        if length < 1:
             return None, 0
         return handler.read(length), length
 
