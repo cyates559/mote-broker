@@ -3,7 +3,6 @@ import errno
 from socket import socket, timeout
 from functools import cached_property
 
-from logger import log
 
 OP_CONTINUATION = 0
 OP_TEXT = 1

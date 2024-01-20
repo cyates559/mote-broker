@@ -19,7 +19,7 @@ class Client:
         return set()
 
     @cached_property
-    def message_queue(self) -> Queue[OutgoingMessage]:
+    def message_queue(self) -> Queue:
         return Queue()
 
     def __str__(self):

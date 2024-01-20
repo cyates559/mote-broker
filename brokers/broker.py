@@ -72,7 +72,8 @@ class Broker(BrokerContext):
                 rows = self.broadcast_queue.get(block=True)
                 if rows:
                     with self.subscription_lock:
-                        self.process_rows(rows)
+                        with log.dont_fail():
+                            self.process_rows(rows)
 
     def add_client(self, client: Client):
         prev_client = self.clients.get(client.id)
