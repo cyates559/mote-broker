@@ -154,25 +154,31 @@ class Handler(Client, ReaderWriter):
             packet_id = self.next_packet_id
             self.used_ids.add(packet_id)
             try:
-                PublishPacket(
+                if message.qos == 0:
+                    condition = False
+                elif message.qos == 1:
+                    condition = self.create_packet_condition(PublishAcknowledgePacket, packet_id)
+                else:
+                    condition = self.create_packet_condition(PublishReceivedPacket, packet_id)
+                publish = PublishPacket(
                     flags={"qos": message.qos, "retain": False},
                     topic=message.topic,
                     data=message.data,
                     id=packet_id,
-                ).write(self)
-                if message.qos == 1:
-                    self.wait_for_packet(PublishAcknowledgePacket, packet_id)
-                else:
-                    self.wait_for_packet(PublishReceivedPacket, packet_id)
+                )
+                publish.write(self)
+                if not condition:
+                    return
+                self.wait_for_packet(condition)
+                if message.qos == 2:
                     release = PublishReleasedPacket(id=packet_id)
+                    condition = self.create_packet_condition(PublishCompletePacket, packet_id)
                     release.write(self)
-                    self.wait_for_packet(PublishCompletePacket, packet_id)
+                    self.wait_for_packet(condition)
             finally:
                 self.used_ids.remove(packet_id)
 
-    def wait_for_packet(
-        self, packet_class: Type[PacketWithId], packet_id: int
-    ) -> PacketWithId:
+    def create_packet_condition(self, packet_class: Type[PacketWithId], packet_id: int):
         packet_condition = PacketCondition(
             type_code=packet_class.type_code,
             id=packet_id,
@@ -182,6 +188,9 @@ class Handler(Client, ReaderWriter):
                 f"Already waiting for this packet {packet_class} {packet_id}"
             )
         self.packet_conditions.add(packet_condition)
+        return packet_condition
+
+    def wait_for_packet(self, packet_condition: PacketCondition) -> PacketWithId:
         try:
             result = packet_condition.wait()
         finally:
@@ -229,8 +238,9 @@ class Handler(Client, ReaderWriter):
 
     def handle_publish_qos_2(self, packet: PublishPacket):
         received = PublishReceivedPacket(id=packet.id)
+        condition = self.create_packet_condition(PublishReleasedPacket, packet.id)
         received.write(self)
-        self.wait_for_packet(PublishReleasedPacket, packet.id)
+        self.wait_for_packet(condition)
         self.publish(packet)
         complete = PublishCompletePacket(id=packet.id)
         complete.write(self)
