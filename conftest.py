@@ -2,7 +2,7 @@ from unittest.mock import patch, DEFAULT
 
 from pytest import fixture
 
-from persistence.manager import PersistenceManager
+from tree.manager import PersistenceManager
 
 
 default_tree = {}

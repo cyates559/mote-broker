@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from persistence.models import Message
+from tree.models import Message
 
 
 @admin.register(Message)

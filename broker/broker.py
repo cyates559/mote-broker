@@ -4,10 +4,10 @@ from functools import partial, cached_property
 from threading import Lock
 
 from logger import log
-from persistence.manager import PersistenceManager
+from tree.manager import PersistenceManager
 from protocols.create_messages_for_subscriptions import create_messages_for_subscriptions
 from protocols.filter_tree import filter_tree_with_topic
-from brokers.context import BrokerContext
+from broker.context import BrokerContext
 from models.client import Client
 from models.messages import IncomingMessage, OutgoingMessage
 from models.topic import Topic

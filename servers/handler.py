@@ -4,7 +4,7 @@ from functools import cached_property
 from threading import Condition, Thread
 from typing import Type
 
-from brokers.context import BrokerContext as Broker
+from broker.context import BrokerContext as Broker
 from logger import log
 from models.client import Client
 from models.constants import TOPIC_SEP

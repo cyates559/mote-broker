@@ -1,4 +1,4 @@
-from brokers.broker import Broker
+from broker.broker import Broker
 
 
 if __name__ == "__main__":

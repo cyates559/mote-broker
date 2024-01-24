@@ -25,7 +25,7 @@ class PersistenceManager:
 
         os.environ["DJANGO_SETTINGS_MODULE"] = "db.settings"
         django.setup()
-        from persistence.models import Message
+        from tree.models import Message
 
         results = RecursiveDefaultDict()
         for message in Message.objects.all():
@@ -77,7 +77,7 @@ def loop(running, condition, events):
 
         os.environ["DJANGO_SETTINGS_MODULE"] = "db.settings"
         django.setup()
-        from persistence.models import Message
+        from tree.models import Message
 
         while running[0]:
             with condition:

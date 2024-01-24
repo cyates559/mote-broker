@@ -3,9 +3,9 @@ import dataclasses
 import mock
 import pytest
 
-from brokers.broker import Broker
+from broker.broker import Broker
 from models.client import Client
-from persistence.manager import PersistenceManager
+from tree.manager import PersistenceManager
 from servers.server import Server
 
 

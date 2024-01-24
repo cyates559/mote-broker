@@ -31,7 +31,7 @@ ALLOWED_HOSTS = ["10.0.0.1", "localhost", "carsenyat.es"]
 # Application definition
 
 INSTALLED_APPS = [
-    "persistence.apps.PersistenceConfig",
+    "tree.apps.PersistenceConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

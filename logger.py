@@ -5,7 +5,7 @@ from functools import cached_property
 class Log:
     @cached_property
     def context(self):
-        from brokers.context import BrokerContext
+        from broker.context import BrokerContext
 
         return BrokerContext.instance
 
