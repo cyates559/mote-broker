@@ -19,5 +19,5 @@ class BrokerContext:
         return self
 
     @cached_property
-    def clients(self) -> dict[Client]:
+    def clients(self) -> dict[str, Client]:
         return {}

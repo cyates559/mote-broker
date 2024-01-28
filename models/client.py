@@ -36,6 +36,10 @@ class Client:
     def read_loop(self):
         pass
 
+    @abstractmethod
+    def override_connection(self):
+        pass
+
     @cached_property
     def read_thread(self):
         return Thread(target=self.read_loop, daemon=True)

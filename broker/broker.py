@@ -4,7 +4,7 @@ from functools import partial, cached_property
 from threading import Lock
 
 from logger import log
-from tree.manager import PersistenceManager
+from tree.manager import TreeManager
 from protocols.create_messages_for_subscriptions import create_messages_for_subscriptions
 from protocols.filter_tree import filter_tree_with_topic
 from broker.context import BrokerContext
@@ -31,7 +31,7 @@ class Broker(BrokerContext):
     log_warn: callable = partial(print_in_yellow, "[WARN]")
     log_error: callable = partial(print_in_red, "[ERROR]")
 
-    persistence_manager: PersistenceManager = default_factory(PersistenceManager)
+    tree_manager: TreeManager = default_factory(TreeManager.setup)
     subscription_lock: Lock = default_factory(Lock)
     broadcast_queue: Queue = default_factory(Queue)
     tree: RecursiveDefaultDict = None
@@ -64,10 +64,8 @@ class Broker(BrokerContext):
             log.info("Interrupted!")
 
     def main_loop(self):
-        log.info("Loading message tree...", end="")
-        self.tree = PersistenceManager.load_tree()
-        log.info("Done")
-        with self.persistence_manager, self.tcp_server, self.websocket_server:
+        self.tree = TreeManager.load_tree()
+        with self.tree_manager, self.tcp_server, self.websocket_server:
             while self.running:
                 rows = self.broadcast_queue.get(block=True)
                 if rows:
@@ -85,7 +83,10 @@ class Broker(BrokerContext):
 
     def remove_client(self, client: Client):
         if client.id:
-            self.clients.pop(client.id)
+            try:
+                self.clients.pop(client.id)
+            except KeyError:
+                log.warn(f"Client {client} is not in client list")
 
     def process_rows(self, rows: list):
         messages = create_messages_for_subscriptions(
@@ -148,7 +149,7 @@ class Broker(BrokerContext):
         return True
 
     def retain_rows(self, rows: list):
-        self.persistence_manager.retain(*rows)
+        self.tree_manager.add_tasks(*rows)
         for topic_nodes, data, _ in rows:
             branch = self.tree / topic_nodes
             if branch is not None:
