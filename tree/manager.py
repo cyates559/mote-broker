@@ -64,5 +64,5 @@ class TreeManager(ProcessManager):
                 if node != "":
                     pointer = pointer[node]
             pointer["/"] = message.data
-        log.info("Done")
+        log.info("Done" )
         return results

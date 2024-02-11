@@ -15,4 +15,4 @@ class Message(Model):
     qos = PositiveIntegerField(default=None, null=True)
 
     class Meta:
-        app_label = "persistence"
+        app_label = "tree"
