@@ -113,7 +113,7 @@ class Broker(BrokerContext):
 
     def publish(self, message: IncomingMessage):
         if message.table:
-            self.table_manager.add_tasks((message.topic, message.data))
+            self.table_manager.add_tasks((message.topic, message.data, message.qos))
         else:
             if message.retain:
                 rows = self.tree_manager.process_message(message)
