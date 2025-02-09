@@ -4,6 +4,7 @@ from functools import cached_property
 from socket import socket, AF_INET
 from ssl import SSLContext
 
+from logger import log
 from servers.socket import SocketServer
 from utils.stop_socket import stop_socket
 
@@ -27,7 +28,9 @@ class SecureSocketServer(SocketServer):
         # self.alive = False
         # while self.clients:
         #     self.clients.pop().disconnect()
+        log.debug("HELP ME")
         super().stop()
+        log.debug("DO IT")
         try:
             self.base_socket.shutdown(SHUT_RDWR)
         except OSError as e:
