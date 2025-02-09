@@ -1,10 +1,11 @@
 import dataclasses
-from _socket import SOCK_STREAM
+from _socket import SOCK_STREAM, SHUT_RDWR
 from functools import cached_property
 from socket import socket, AF_INET
 from ssl import SSLContext
 
 from servers.socket import SocketServer
+from utils.stop_socket import stop_socket
 
 
 @dataclasses.dataclass
@@ -26,12 +27,11 @@ class SecureSocketServer(SocketServer):
         # self.alive = False
         # while self.clients:
         #     self.clients.pop().disconnect()
-        # stop_socket(self.host, self.port)
-        # try:
-        #     self.server.shutdown(SHUT_RDWR)
-        # except OSError as e:
-        #     if e.errno not in [9, 57, 107]:
-        #         raise
-        # self.server.close()
         super().stop()
+        try:
+            self.base_socket.shutdown(SHUT_RDWR)
+        except OSError as e:
+            if e.errno not in [9, 57, 107]:
+                raise
+        self.server.close()
         self.base_socket.close()
