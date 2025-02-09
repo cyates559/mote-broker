@@ -1,6 +1,7 @@
 import dataclasses
 from functools import cached_property
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR, SOL_SOCKET, SO_REUSEADDR
+from ssl import SSLError
 from threading import Lock
 from typing import Type
 
@@ -107,7 +108,8 @@ class SocketServer(Server):
             except:
                 if not self.alive:
                     break
-                else: raise
+                else:
+                    log.traceback()
             if not self.alive:
                 break
             self.handle_client(client_socket)
