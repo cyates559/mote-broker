@@ -77,6 +77,7 @@ class TreeManager(ProcessManager):
         self.tree = results
 
     def retain_rows(self, rows: list):
+        print("RR", rows)
         self.add_tasks(*rows)
         for topic_nodes, data, _ in rows:
             branch = self.tree / topic_nodes
