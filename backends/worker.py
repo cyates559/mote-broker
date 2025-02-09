@@ -57,7 +57,7 @@ class ProcessWorker(ProcessHandle):
                     with self.response_condition:
                         self.response_condition.notify()
                 if consumed_tasks:
-                    self.run_tasks(consumed_tasks)
+                    self.run_tasks(*consumed_tasks)
         except (KeyboardInterrupt, InterruptedError):
             pass
 
