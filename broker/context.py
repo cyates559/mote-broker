@@ -12,7 +12,7 @@ class BrokerContext:
     running = True
 
     def __new__(cls, *args, **kwargs):
-        self = BrokerContext.instance = super().__new__(cls, *args, **kwargs)
+        self = BrokerContext.instance = super().__new__(cls)
         self.main_task = None
         self.subscriptions = RecursiveDefaultDict(default_type=dict)
         return self
