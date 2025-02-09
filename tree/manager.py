@@ -26,6 +26,7 @@ class TreeWorker(ProcessWorker):
     def run_tasks(self, *messages: (list, bytes, int)):
         delete_list = []
         create_list = []
+        print("MESG",messages[0])
         for topic_nodes, data, qos in messages:
             topic = TOPIC_SEP.join(topic_nodes)
             if data is None:
