@@ -25,16 +25,13 @@ class SecureSocketServer(SocketServer):
 
 
     def stop(self):
-        # self.alive = False
-        # while self.clients:
-        #     self.clients.pop().disconnect()
-        log.debug("HELP ME")
-        super().stop()
-        log.debug("DO IT")
+        self.alive = False
+        while self.clients:
+            self.clients.pop().disconnect()
+        stop_socket(self.host, 443)
         try:
-            self.base_socket.shutdown(SHUT_RDWR)
+            self.server.shutdown(SHUT_RDWR)
         except OSError as e:
             if e.errno not in [9, 57, 107]:
                 raise
         self.server.close()
-        self.base_socket.close()
