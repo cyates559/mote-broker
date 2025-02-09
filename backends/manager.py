@@ -2,12 +2,12 @@ import dataclasses
 from multiprocessing import Process, Condition, Lock, Manager
 from typing import Type
 
-from backends.worker import Handle, BackendWorker, QUERY, RESPONSE, RUNNING
+from backends.worker import ProcessHandle, ProcessWorker, QUERY, RESPONSE, RUNNING
 from logger import log
 
 
-@dataclasses.dataclass(frozen=True)
-class ProcessManager(Handle):
+@dataclasses.dataclass
+class ProcessManager(ProcessHandle):
     name: str
     process: Process
     worker_class = None
@@ -26,21 +26,28 @@ class ProcessManager(Handle):
         return response
 
     @classmethod
-    def setup(cls, worker_class: Type[BackendWorker] = None):
+    def setup(cls, worker_class: Type[ProcessWorker] = None):
         if worker_class is None:
             worker_class = cls.worker_class
         memory_manager = Manager()
         task_condition = Condition(lock=Lock())
         response_condition = Condition(lock=Lock())
-        query_lock = Lock(),
+        query_lock = Lock()
         tasks = memory_manager.list([])
+        responses = memory_manager.list([])
         status = memory_manager.list([False, None, None])
-        args = (task_condition, tasks, status, query_lock, response_condition,)
+        args = (task_condition, tasks, responses, status, query_lock, response_condition,)
         return cls(
             *args,
             name=worker_class.__name__,
             process=Process(target=worker_class, args=args),
         )
+
+    def preload(self):
+        """
+        This is run by the main process before the worker process starts
+        """
+        pass
 
     def add_tasks(self, *tasks):
         with self.task_condition:
@@ -49,6 +56,7 @@ class ProcessManager(Handle):
 
     def __enter__(self):
         log.info(f"Starting {self.name}...", end="")
+        self.preload()
         self.status[RUNNING] = True
         self.process.start()
         log.info("Done")

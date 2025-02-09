@@ -17,8 +17,12 @@ class IncomingMessage:
     topic: Topic
     qos: int
     retain: bool
-    tree: bool
+    graft: bool
     data: bytes
+
+    @property
+    def table(self) -> bool:
+        return self.topic.for_table
 
     @classmethod
     def from_packet(cls, packet: PublishPacket):
@@ -41,22 +45,24 @@ class IncomingMessage:
     @classmethod
     def from_raw_data(cls, raw_topic: str, data: bytes, qos: int, retain: bool):
         """
-        The tree flag is normally False unless
-        the topic has a trailing slash
+        The retain flag is part of the packet structure.
+        The graft flag is indicated with a trailing seperator on the topic.
+        If the topic is for a table, the first node will contain the table flag and optionally an operator.
         """
         if retain:
             last = raw_topic[-1]
-            topic = raw_topic
+
             if last == TOPIC_SEP:
-                topic = topic[:-1]
-                tree = True
+                raw_topic = raw_topic[:-1]
+                graft = True
             else:
-                tree = False
+                graft = False
+            topic = Topic.from_str(raw_topic)
             return cls(
-                topic=Topic.from_str(topic),
+                topic=topic,
                 qos=qos,
                 retain=True,
-                tree=tree,
+                graft=graft,
                 data=data,
             )
         else:
@@ -64,7 +70,7 @@ class IncomingMessage:
                 topic=Topic.from_str(raw_topic),
                 qos=qos,
                 retain=False,
-                tree=False,
+                graft=False,
                 data=data,
             )
 
@@ -75,7 +81,7 @@ class IncomingMessage:
         for node in self.topic.node_list:
             if not is_node_static(node):
                 raise DynamicMessageError
-        return (self.topic.node_list, self.data, self.qos)
+        return self.topic.node_list, self.data, self.qos
 
     @classmethod
     def last_will(cls, packet: ConnectPacket):

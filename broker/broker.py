@@ -1,12 +1,14 @@
 import dataclasses
+import ssl
 from queue import Queue
-from functools import partial, cached_property
+from functools import cached_property
 from threading import Lock
 
 from logger import log
+from servers.ssl import SecureSocketServer
+from tables.manager import TableManager
 from tree.manager import TreeManager
 from protocols.create_messages_for_subscriptions import create_messages_for_subscriptions
-from protocols.filter_tree import filter_tree_with_topic
 from broker.context import BrokerContext
 from models.client import Client
 from models.messages import IncomingMessage, OutgoingMessage
@@ -14,8 +16,6 @@ from models.topic import Topic
 from servers.socket import SocketServer
 from servers.websocket.handler import WebsocketHandler
 from utils.field import default_factory
-from utils.recursive_default_dict import RecursiveDefaultDict
-from utils.stdout_log import print_in_yellow, print_in_green, print_in_red, print_in_magenta
 
 
 @dataclasses.dataclass
@@ -25,24 +25,22 @@ class Broker(BrokerContext):
     ws_host: str = None
     tcp_port: int = 1993
     ws_port: int = 53535
-
-    log_info: callable = print_in_green
-    log_debug: callable = partial(print_in_magenta, "[DEBUG]")
-    log_warn: callable = partial(print_in_yellow, "[WARN]")
-    log_error: callable = partial(print_in_red, "[ERROR]")
+    ssl_cert: str = None
+    ssl_key: str = None
 
     tree_manager: TreeManager = default_factory(TreeManager.setup)
+    table_manager: TableManager = default_factory(TableManager.setup)
     subscription_lock: Lock = default_factory(Lock)
     broadcast_queue: Queue = default_factory(Queue)
-    tree: RecursiveDefaultDict = None
 
     @cached_property
     def websocket_server(self):
-        return SocketServer(
+        return SecureSocketServer(
             name="WebSocket Server",
             host=self.ws_host or self.host,
             port=self.ws_port,
             handler_class=WebsocketHandler,
+            ssl_context=self.ssl_context,
         )
 
     @cached_property
@@ -52,6 +50,14 @@ class Broker(BrokerContext):
             host=self.tcp_host or self.host,
             port=self.tcp_port,
         )
+
+    @cached_property
+    def ssl_context(self):
+        if not (self.ssl_cert and self.ssl_key):
+            return None
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(self.ssl_cert, keyfile=self.ssl_key)
+        return ssl_context
 
     @classmethod
     def start(cls, *args, **kwargs):
@@ -64,14 +70,13 @@ class Broker(BrokerContext):
             log.info("Interrupted!")
 
     def main_loop(self):
-        self.tree = TreeManager.load_tree()
-        with self.tree_manager, self.tcp_server, self.websocket_server:
+        with self.tree_manager, self.tcp_server, self.websocket_server: #table_manager
             while self.running:
                 rows = self.broadcast_queue.get(block=True)
                 if rows:
                     with self.subscription_lock:
                         try:
-                            self.process_rows(rows)
+                            self.process_outgoing_rows(rows)
                         except:
                             log.traceback()
 
@@ -88,7 +93,7 @@ class Broker(BrokerContext):
             except KeyError:
                 log.warn(f"Client {client} is not in client list")
 
-    def process_rows(self, rows: list):
+    def process_outgoing_rows(self, rows: list):
         messages = create_messages_for_subscriptions(
             self.subscriptions,
             rows,
@@ -107,30 +112,23 @@ class Broker(BrokerContext):
                 client.queue_message(message)
 
     def publish(self, message: IncomingMessage):
-        if message.retain:
-            if message.tree:
-                rows = message.flatten_into_rows(self.tree)
-            else:
-                rows = message.get_applicable_rows(self.tree)
-            self.retain_rows(rows)
+        if message.table:
+            self.table_manager.add_tasks((message.topic, message.data))
         else:
-            rows = [message.as_single_row()]
-        self.broadcast_queue.put(rows)
+            if message.retain:
+                rows = self.tree_manager.process_message(message)
+            else:
+                rows = [message.as_single_row()]
+            self.broadcast_queue.put(rows)
 
-    def subscribe(self, client: Client, topic_str: str, qos: int, sync: bool):
+    def subscribe(self, client: Client, topic_str: str, qos: int, tree: bool):
         topic = Topic.from_str(topic_str)
-        if sync:
-            tree_item = filter_tree_with_topic(
-                topic=topic.node_list,
-                tree=self.tree,
-            )
-            message = OutgoingMessage.from_tree_item(
-                topic=topic_str,
-                qos=qos,
-                tree_item=tree_item,
-            )
+        if tree:
+            message = self.tree_manager.get_message(topic, qos=qos)
             client.queue_message(message)
-
+        elif topic.for_table:
+            message = self.table_manager.get_message(topic, qos=qos)
+            client.queue_message(message)
         with self.subscription_lock:
             client_set = self.subscriptions << topic.node_list
             client_set[client.id] = qos
@@ -147,10 +145,3 @@ class Broker(BrokerContext):
                 if not client_set:
                     self.subscriptions.cascade_delete(topic.node_list)
         return True
-
-    def retain_rows(self, rows: list):
-        self.tree_manager.add_tasks(*rows)
-        for topic_nodes, data, _ in rows:
-            branch = self.tree / topic_nodes
-            if branch is not None:
-                branch.leaf = data

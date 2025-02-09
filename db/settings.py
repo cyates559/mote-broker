@@ -27,7 +27,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["10.0.0.1", "localhost", "carsenyat.es"]
 
-
 # Application definition
 
 INSTALLED_APPS = [

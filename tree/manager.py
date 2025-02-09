@@ -2,13 +2,19 @@ import os
 from functools import cached_property
 
 from backends.manager import ProcessManager
-from backends.worker import BackendWorker
+from backends.worker import ProcessWorker
 from logger import log
-from models.topic import TOPIC_SEP
+from models.messages import IncomingMessage, OutgoingMessage
+from models.topic import TOPIC_SEP, Topic
+from protocols.filter_tree import filter_tree_with_topic
 from utils.recursive_default_dict import RecursiveDefaultDict
+from utils.tree_item import TreeItem
 
 
-class TreeWorker(BackendWorker):
+class TreeWorker(ProcessWorker):
+    """
+    Runs inside its own process, writes data to the database.
+    """
     @cached_property
     def message_class(self):
         import django
@@ -45,10 +51,13 @@ class TreeWorker(BackendWorker):
 
 
 class TreeManager(ProcessManager):
+    """
+    Holds the entire tree in memory, gives tasks to the TreeWorker to run.
+    """
+    tree: RecursiveDefaultDict = None
     worker_class = TreeWorker
 
-    @staticmethod
-    def load_tree() -> RecursiveDefaultDict:
+    def preload(self):
         log.info("Loading message tree...", end="")
         import django
 
@@ -64,5 +73,33 @@ class TreeManager(ProcessManager):
                 if node != "":
                     pointer = pointer[node]
             pointer["/"] = message.data
-        log.info("Done")
-        return results
+        self.tree = results
+
+    def retain_rows(self, rows: list):
+        self.add_tasks(*rows)
+        for topic_nodes, data, _ in rows:
+            branch = self.tree / topic_nodes
+            if branch is not None:
+                branch.leaf = data
+
+    def process_message(self, message: IncomingMessage) -> list:
+        if message.graft:
+            rows = message.flatten_into_rows(self.tree)
+        else:
+            rows = message.get_applicable_rows(self.tree)
+        self.retain_rows(rows)
+        return rows
+
+    def filter(self, topic: Topic) -> TreeItem:
+        return filter_tree_with_topic(
+            topic=topic.node_list,
+            tree=self.tree,
+        )
+
+    def get_message(self, topic: Topic, qos: int) -> OutgoingMessage:
+        tree_item = self.filter(topic)
+        return OutgoingMessage.from_tree_item(
+            topic=topic.full_str,
+            qos=qos,
+            tree_item=tree_item,
+        )

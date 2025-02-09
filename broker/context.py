@@ -8,7 +8,6 @@ from utils.recursive_default_dict import RecursiveDefaultDict
 
 class BrokerContext:
     instance: Any
-    tree: RecursiveDefaultDict
     main_task: Task
     running = True
 

@@ -259,16 +259,16 @@ class Handler(Client, ReaderWriter):
         response_codes = []
         for request in packet.requests:
             if request.topic[0] == TOPIC_SEP:
-                sync = True
+                tree = True
                 topic_str = request.topic[1:]
             else:
-                sync = False
+                tree = False
                 topic_str = request.topic
             if Broker.instance.subscribe(
                 client=self,
                 topic_str=topic_str,
                 qos=request.qos,
-                sync=sync,
+                tree=tree,
             ):
                 response_codes.append(request.qos)
                 self.subscriptions.add(topic_str)

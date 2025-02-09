@@ -1,27 +1,29 @@
 from functools import cached_property
 from typing import List, Optional, Union
 
-from models.constants import TOPIC_SEP
+from models.constants import TOPIC_SEP, TABLE_FLAG
 
 
 class Topic:
-    def __init__(self, node: str, parent: "Topic" = None):
+    def __init__(self, node: str, parent: "Topic" = None, full_str: str = None, node_list: list = None):
         self.node = node
         self.parent = parent
+        self._nodes = node_list
+        self._str = full_str
 
     @classmethod
-    def from_nodes(cls, nodes: list) -> Optional["Topic"]:
+    def from_nodes(cls, nodes: list, **kwargs) -> Optional["Topic"]:
         if len(nodes) == 0:
             return None
         if len(nodes) == 1:
             parent = None
         else:
             parent = cls.from_nodes(nodes[:-1])
-        return cls(nodes[-1], parent=parent)
+        return cls(nodes[-1], parent=parent, **kwargs)
 
     @classmethod
     def from_str(cls, s: str) -> Optional["Topic"]:
-        return cls.from_nodes(s.split(TOPIC_SEP))
+        return cls.from_nodes(s.split(TOPIC_SEP), full_str=s)
 
     def __truediv__(self, node: str) -> "Topic":
         return Topic(node, parent=self)
@@ -48,18 +50,26 @@ class Topic:
             return r
 
     @cached_property
+    def for_table(self) -> bool:
+        return self.node_list[0][0] == TABLE_FLAG
+
+    @cached_property
     def length(self):
         return len(self.node_list)
 
-    @cached_property
+    @property
     def full_str(self) -> str:
-        return TOPIC_SEP.join(self.node_list)
+        if self._str is None:
+            self._str = TOPIC_SEP.join(self.node_list)
+        return self._str
 
-    @cached_property
+    @property
     def node_list(self) -> List[str]:
-        ancestors = []
-        topic = self
-        while topic is not None:
-            ancestors.append(topic.node)
-            topic = topic.parent
-        return list(reversed(ancestors))
+        if self._nodes is None:
+            ancestors = []
+            topic = self
+            while topic is not None:
+                ancestors.append(topic.node)
+                topic = topic.parent
+            self._nodes = list(reversed(ancestors))
+        return self._nodes
