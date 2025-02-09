@@ -26,7 +26,6 @@ class TreeWorker(ProcessWorker):
     def run_tasks(self, *messages: (list, bytes, int)):
         delete_list = []
         create_list = []
-        print("MESG",messages)
         for topic_nodes, data, qos in messages:
             topic = TOPIC_SEP.join(topic_nodes)
             if data is None:
@@ -77,7 +76,6 @@ class TreeManager(ProcessManager):
         self.tree = results
 
     def retain_rows(self, rows: list):
-        print("RR", rows)
         self.add_tasks(*rows)
         for topic_nodes, data, _ in rows:
             branch = self.tree / topic_nodes

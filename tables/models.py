@@ -26,7 +26,6 @@ def parse_field(field_name: str, type_name: str, **field_attrs) -> Field:
 
 def parse_fields(fields: OrderedDict) -> OrderedDict:
     result = OrderedDict()
-    print(fields.items())
     for field_name, (type_name, field_attrs) in fields.items():
         result[field_name] = parse_field(field_name, type_name, **field_attrs)
     return result
@@ -72,7 +71,6 @@ class TableMeta(Model):
         self.delete()
 
     def build(self) -> type[Model]:
-        print("BUILD", self)
         try:
             fields = json.loads(self.field_bytes.decode())
         except json.JSONDecodeError:
