@@ -102,7 +102,12 @@ class SocketServer(Server):
             return
         self.server.listen()
         while self.alive:
-            client_socket, address = self.server.accept()
+            try:
+                client_socket, address = self.server.accept()
+            except:
+                if not self.alive:
+                    break
+                else: raise
             if not self.alive:
                 break
             self.handle_client(client_socket)
