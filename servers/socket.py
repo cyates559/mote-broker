@@ -110,6 +110,7 @@ class SocketServer(Server):
                     break
                 else:
                     log.traceback()
+                    break
             if not self.alive:
                 break
             self.handle_client(client_socket)
