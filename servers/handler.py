@@ -112,7 +112,6 @@ class Handler(Client, ReaderWriter):
                 raise TooManyPacketIds
         return i
 
-    @abstractmethod
     def flush(self):
         pass
 
