@@ -2,7 +2,7 @@ import dataclasses
 from abc import abstractmethod
 from functools import cached_property
 from threading import Condition, Thread
-from typing import Type
+from typing import Type, Union
 
 from broker.context import BrokerContext as Broker
 from logger import log
@@ -120,7 +120,7 @@ class Handler(Client, ReaderWriter):
         pass
 
     @abstractmethod
-    def set_keep_alive(self, seconds: int):
+    def set_keep_alive(self, seconds: Union[int, None]):
         pass
 
     @abstractmethod
@@ -328,7 +328,6 @@ class Handler(Client, ReaderWriter):
             self.start_connection()
             connect_packet = ConnectPacket.read(self)
             self.id = connect_packet.client_id
-            self.set_keep_alive(connect_packet.keep_alive + 1)
             acknowledge_packet = ConnectAcknowledgePacket(
                 session_parent=0,
                 return_code=ConnectAcknowledgePacket.ReturnCode.ACCEPTED,
@@ -338,7 +337,7 @@ class Handler(Client, ReaderWriter):
             Broker.instance.add_client(self)
             self.linked = True
             while self.alive:
-                packet = self.read_next_packet()
+                packet = self.read_next_packet(connect_packet.keep_alive + 1)
                 self.handle_packet(packet)
         except: #(ConnectionError, UnexpectedPacketType) as x:
             ## if not isinstance(x, ConnectionError):
@@ -348,8 +347,10 @@ class Handler(Client, ReaderWriter):
             if self.linked:
                 self.handle_disconnected()
 
-    def read_next_packet(self):
+    def read_next_packet(self, keep_alive_seconds):
+        self.set_keep_alive(keep_alive_seconds)
         msg_type, flags = self.decode_header()
+        self.set_keep_alive(None)
         clazz = self.infer_packet_class(msg_type)
         packet = clazz.read(self, flags)
         return packet
