@@ -18,7 +18,7 @@ class SecureSocketServer(SocketServer):
     @cached_property
     def server(self):
         if self.ssl_context:
-            return self.ssl_context.wrap_socket(#self.base_socket)
+            return self.ssl_context.wrap_socket(
                 self.base_socket,
                 server_side=True,
                 do_handshake_on_connect=True,
