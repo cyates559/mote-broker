@@ -3,7 +3,6 @@ import errno
 from socket import socket, timeout
 from functools import cached_property
 
-
 OP_CONTINUATION = 0
 OP_TEXT = 1
 OP_BYTES = 2
@@ -33,7 +32,6 @@ FIN_MASK = 128
     |                     Payload Data continued ...                |
     +---------------------------------------------------------------+
 """
-
 
 @dataclasses.dataclass
 class Frame:

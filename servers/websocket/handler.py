@@ -74,6 +74,7 @@ class WebsocketHandler(SocketHandler):
                 if frame.fin:
                     return buf
             elif frame.opcode == OP_CLOSE:
+                log.debug("Websocket closed", self.id)
                 if frame.fin:
                     self.send_close()
                 self.end_connection()

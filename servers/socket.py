@@ -40,8 +40,8 @@ class SocketHandler(Handler):
                 cached_bytes.extend(buf)
                 byte_count += len(buf)
             return bytes(cached_bytes)
-        except OSError:
-            raise ConnectionError from OSError
+        except OSError as x:
+            raise ConnectionError from x
 
     def get_host_port_tuple(self):
         return self.sock.getsockname()

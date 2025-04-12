@@ -337,9 +337,10 @@ class Handler(Client, ReaderWriter):
             while self.alive:
                 packet = self.read_next_packet()
                 self.handle_packet(packet)
-        except (ConnectionError, UnexpectedPacketType) as x:
-            if not isinstance(x, ConnectionError):
-                log.traceback()
+        except: #(ConnectionError, UnexpectedPacketType) as x:
+            ## if not isinstance(x, ConnectionError):
+            log.traceback()
+            ##
             self.close()
             if self.linked:
                 self.handle_disconnected()

@@ -9,6 +9,9 @@ str_size = static_int(2)
 
 @dataclasses.dataclass
 class PacketDynamicStr(PacketType):
+    """
+    A string with two leading bytes that add up to the remaining length to read
+    """
     optional: bool = False
 
     def read(self, handler, kwargs):
