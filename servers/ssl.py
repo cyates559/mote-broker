@@ -18,21 +18,21 @@ class SecureSocketServer(SocketServer):
     @cached_property
     def server(self):
         if self.ssl_context:
-            return self.ssl_context.wrap_socket(self.base_socket)
-                # self.base_socket,
-                # server_side=True,
-                # do_handshake_on_connect=True,
-            # )
+            return self.ssl_context.wrap_socket(#self.base_socket)
+                self.base_socket,
+                server_side=True,
+                do_handshake_on_connect=True,
+            )
         return self.base_socket
 
 
-    # def handle_client(self, sock: SSLSocket):
-    #     log.debug("CLIENT", sock)
-    #     sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, True)
-    #     sock.settimeout(1000)
-    #     sock.do_handshake()
-    #     # sock.settimeout(None)
-    #     super().handle_client(sock)
+    def handle_client(self, sock: SSLSocket):
+        log.debug("CLIENT", sock)
+        sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, True)
+        sock.settimeout(1000)
+        sock.do_handshake()
+        # sock.settimeout(None)
+        super().handle_client(sock)
 
     def stop(self):
         self.alive = False
