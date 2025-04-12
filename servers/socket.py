@@ -13,6 +13,7 @@ from utils.stop_socket import stop_socket
 
 @dataclasses.dataclass
 class SocketHandler(Handler):
+
     sock: socket
 
     @cached_property
@@ -62,6 +63,9 @@ class SocketHandler(Handler):
             if e.errno not in [9, 107]:
                 raise
         self.sock.close()
+
+    def flush(self):
+        self.sock.
 
 
 @dataclasses.dataclass

@@ -21,7 +21,7 @@ class SecureSocketServer(SocketServer):
             return self.ssl_context.wrap_socket(
                 self.base_socket,
                 server_side=True,
-                do_handshake_on_connect=True,
+                do_handshake_on_connect=False,
             )
         return self.base_socket
 
@@ -29,9 +29,8 @@ class SecureSocketServer(SocketServer):
     def handle_client(self, sock: SSLSocket):
         log.debug("CLIENT", sock)
         sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, True)
-        sock.settimeout(1000)
+        sock.settimeout(None)
         sock.do_handshake()
-        # sock.settimeout(None)
         super().handle_client(sock)
 
     def stop(self):

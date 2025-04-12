@@ -113,6 +113,10 @@ class Handler(Client, ReaderWriter):
         return i
 
     @abstractmethod
+    def flush(self):
+        pass
+
+    @abstractmethod
     def get_host_port_tuple(self) -> (str, int):
         pass
 

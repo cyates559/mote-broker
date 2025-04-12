@@ -85,6 +85,7 @@ class Packet(Payload):
         if client_id is None:
             client_id = handler.id
         log.info("Read", result, "from", client_id)
+        handler.flush()
         return result
 
     def write(self, handler):
