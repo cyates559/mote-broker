@@ -94,6 +94,7 @@ class SocketServer(Server):
 
     def loop(self):
         self.alive = True
+        log.debug(self.server)
         self.server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         try:
             self.server.bind((self.host, self.port))
