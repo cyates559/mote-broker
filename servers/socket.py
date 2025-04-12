@@ -64,9 +64,6 @@ class SocketHandler(Handler):
                 raise
         self.sock.close()
 
-    def flush(self):
-        self.sock.
-
 
 @dataclasses.dataclass
 class SocketServer(Server):
