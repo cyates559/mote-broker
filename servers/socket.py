@@ -31,18 +31,11 @@ class SocketHandler(Handler):
         self.sock.send(data)
 
     def read(self, size):
-        error_count = 0
         try:
             cached_bytes = bytearray()
             byte_count = 0
             while byte_count < size:
-                try:
-                    buf = self.sock.recv(size)
-                except BlockingIOError as x:
-                    log.traceback(x)
-                    error_count += 1
-                    if error_count > 5:
-                        raise
+                buf = self.sock.recv(size)
                 if not buf:
                     raise ConnectionError
                 cached_bytes.extend(buf)

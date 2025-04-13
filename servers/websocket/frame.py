@@ -3,6 +3,8 @@ import errno
 from socket import socket, timeout
 from functools import cached_property
 
+from logger import log
+
 OP_CONTINUATION = 0
 OP_TEXT = 1
 OP_BYTES = 2
@@ -76,7 +78,7 @@ class Frame:
         return bytes(result)
 
     @classmethod
-    def recv(cls, sock: socket):
+    def recv(cls, sock: socket, error_count=0):
         try:
             header = sock.recv(2)
             fin = (header[0] & 128) == 128
@@ -96,6 +98,11 @@ class Frame:
                 payload = cls.unmask(data[:4], data[4:])
             else:
                 payload = sock.recv(payload_len)
+        except BlockingIOError:
+            log.traceback()
+            if error_count > 10:
+                raise
+            cls.recv(sock, error_count + 1)
         except IndexError:
             sock.close()
             raise ConnectionError("Unable to read")
