@@ -80,13 +80,13 @@ class Frame:
     @classmethod
     def sock_recv_retry(cls, sock, length, error_count=0):
         try:
-            sock.recv(length)
+            return sock.recv(length)
         except BlockingIOError:
             log.traceback()
             if error_count > 9:
                 raise
             else:
-                cls.sock_recv_retry(sock, length, error_count + 1)
+                return cls.sock_recv_retry(sock, length, error_count + 1)
 
     @classmethod
     def recv(cls, sock: socket, error_count=0):
