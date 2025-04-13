@@ -1,8 +1,10 @@
 import dataclasses
+import ssl
 from socket import SHUT_RDWR, IPPROTO_TCP, TCP_NODELAY
 from functools import cached_property
 from ssl import SSLContext, SSLSocket
 
+from broker.context import BrokerContext
 from logger import log
 from servers.socket import SocketServer
 from utils.stop_socket import stop_socket
@@ -18,7 +20,9 @@ class SecureSocketServer(SocketServer):
     @cached_property
     def server(self):
         if self.ssl_context:
-            return self.ssl_context.wrap_socket(
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ctx.load_cert_chain(BrokerContext.instance.ssl_cert, keyfile=BrokerContext.instance.ssl_key)
+            return ctx.wrap_socket(
                 self.base_socket,
                 server_side=True,
                 do_handshake_on_connect=False,
