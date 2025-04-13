@@ -103,6 +103,7 @@ class Frame:
             if error_count > 10:
                 raise
             cls.recv(sock, error_count + 1)
+            return
         except IndexError:
             sock.close()
             raise ConnectionError("Unable to read")
