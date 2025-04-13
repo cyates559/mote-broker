@@ -78,32 +78,37 @@ class Frame:
         return bytes(result)
 
     @classmethod
+    def sock_recv_retry(cls, sock, length, error_count=0):
+        try:
+            sock.recv(length)
+        except BlockingIOError:
+            log.traceback()
+            if error_count > 9:
+                raise
+            else:
+                cls.sock_recv_retry(sock, length, error_count + 1)
+
+    @classmethod
     def recv(cls, sock: socket, error_count=0):
         try:
-            header = sock.recv(2)
+            header = cls.sock_recv_retry(sock, 2)
             fin = (header[0] & 128) == 128
             opcode = (header[0] & 15)
             masked = (header[1] & 128) == 128
             payload_len = (header[1] & 127)
             if payload_len == 126:
-                payload_len = int.from_bytes(sock.recv(2), 'big')
+                payload_len = int.from_bytes(cls.sock_recv_retry(sock, 2), 'big')
             elif payload_len == 127:
-                payload_len = int.from_bytes(sock.recv(8), 'big')
+                payload_len = int.from_bytes(cls.sock_recv_retry(sock, 8), 'big')
             if payload_len == 0:
                 payload = b""
                 if masked:
-                    sock.recv(4)
+                    cls.sock_recv_retry(sock, 4)
             elif masked:
-                data = sock.recv(payload_len + 4)
+                data = cls.sock_recv_retry(sock, payload_len + 4)
                 payload = cls.unmask(data[:4], data[4:])
             else:
-                payload = sock.recv(payload_len)
-        except BlockingIOError:
-            log.traceback()
-            if error_count > 10:
-                raise
-            cls.recv(sock, error_count + 1)
-            return
+                payload = cls.sock_recv_retry(sock, payload_len)
         except IndexError:
             sock.close()
             raise ConnectionError("Unable to read")
