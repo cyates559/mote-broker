@@ -64,7 +64,7 @@ class Handler(Client, ReaderWriter):
     last_will: IncomingMessage
     alive: bool = True
     linked: bool = False
-    keep_alive: int
+    keep_alive: int = None
     connection_override: bool = False
 
     @cached_property
