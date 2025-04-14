@@ -83,6 +83,7 @@ class Frame:
             sock.settimeout(timeout)
             return sock.recv(length)
         except BlockingIOError:
+            log.debug("TIMEOUT", timeout)
             log.traceback()
             if error_count > 9:
                 raise
