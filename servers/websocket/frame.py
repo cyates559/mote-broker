@@ -1,6 +1,6 @@
 import dataclasses
 import errno
-from socket import socket, timeout
+from socket import socket
 from functools import cached_property
 
 from logger import log
@@ -78,20 +78,22 @@ class Frame:
         return bytes(result)
 
     @classmethod
-    def sock_recv_retry(cls, sock, length, error_count=0):
+    def sock_recv_retry(cls, sock, length, error_count=0, timeout=None):
         try:
+            sock.settimeout(timeout)
             return sock.recv(length)
         except BlockingIOError:
             log.traceback()
             if error_count > 9:
                 raise
             else:
-                return cls.sock_recv_retry(sock, length, error_count + 1)
+                return cls.sock_recv_retry(sock, length, error_count + 1, timeout)
 
     @classmethod
-    def recv(cls, sock: socket, error_count=0):
+    def recv(cls, sock: socket, timeout=None):
         try:
-            header = cls.sock_recv_retry(sock, 2)
+            header = cls.sock_recv_retry(sock, length=2, timeout=timeout)
+            sock.settimeout(None)
             fin = (header[0] & 128) == 128
             opcode = (header[0] & 15)
             masked = (header[1] & 128) == 128

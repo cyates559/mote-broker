@@ -29,6 +29,10 @@ class WebsocketHandler(SocketHandler):
     alive: bool = True
     buf: BytesIO = default_factory(BytesIO, b"")
 
+    def set_keep_alive(self, seconds):
+        self.keep_alive = seconds
+        self.sock.settimeout(None)
+
     def get_host_port_tuple(self):
         return self.sock.getsockname()
 
@@ -68,7 +72,7 @@ class WebsocketHandler(SocketHandler):
 
     def read_frames(self, buf: bytearray) -> bytearray:
         while self.alive:
-            frame = Frame.recv(self.sock)
+            frame = Frame.recv(self.sock, self.timeout)
             if frame.opcode in [OP_BYTES, OP_CONTINUATION]:
                 buf.extend(frame.payload)
                 if frame.fin:

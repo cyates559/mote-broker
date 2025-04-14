@@ -64,6 +64,7 @@ class Handler(Client, ReaderWriter):
     last_will: IncomingMessage
     alive: bool = True
     linked: bool = False
+    keep_alive: int
     connection_override: bool = False
 
     @cached_property
@@ -119,9 +120,8 @@ class Handler(Client, ReaderWriter):
     def get_host_port_tuple(self) -> (str, int):
         pass
 
-    @abstractmethod
     def set_keep_alive(self, seconds: Union[int, None]):
-        pass
+        self.keep_alive = seconds
 
     @abstractmethod
     def close(self):
@@ -336,8 +336,9 @@ class Handler(Client, ReaderWriter):
             acknowledge_packet.write(self)
             Broker.instance.add_client(self)
             self.linked = True
+            self.set_keep_alive(connect_packet.keep_alive + 1)
             while self.alive:
-                packet = self.read_next_packet(connect_packet.keep_alive + 1)
+                packet = self.read_next_packet()
                 self.handle_packet(packet)
         except: #(ConnectionError, UnexpectedPacketType) as x:
             ## if not isinstance(x, ConnectionError):
@@ -347,10 +348,8 @@ class Handler(Client, ReaderWriter):
             if self.linked:
                 self.handle_disconnected()
 
-    def read_next_packet(self, keep_alive_seconds):
-        self.set_keep_alive(keep_alive_seconds)
+    def read_next_packet(self):
         msg_type, flags = self.decode_header()
-        self.set_keep_alive(None)
         clazz = self.infer_packet_class(msg_type)
         packet = clazz.read(self, flags)
         return packet

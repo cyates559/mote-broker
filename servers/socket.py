@@ -1,7 +1,6 @@
 import dataclasses
 from functools import cached_property
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR, SOL_SOCKET, SO_REUSEADDR
-from ssl import SSLError, SSLSocket
 from threading import Lock
 from typing import Type
 
@@ -48,6 +47,7 @@ class SocketHandler(Handler):
         return self.sock.getsockname()
 
     def set_keep_alive(self, seconds):
+        super().set_keep_alive(seconds)
         self.sock.settimeout(seconds)
 
     def close(self):

@@ -29,7 +29,6 @@ class SecureSocketServer(SocketServer):
             )
         return self.base_socket
 
-
     def handle_client(self, sock: SSLSocket):
         log.debug("CLIENT", sock)
         sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, True)
