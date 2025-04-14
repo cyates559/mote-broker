@@ -72,7 +72,7 @@ class WebsocketHandler(SocketHandler):
 
     def read_frames(self, buf: bytearray) -> bytearray:
         while self.alive:
-            frame = Frame.recv(self.sock, self.timeout)
+            frame = Frame.recv(self.sock, self.keep_alive)
             if frame.opcode in [OP_BYTES, OP_CONTINUATION]:
                 buf.extend(frame.payload)
                 if frame.fin:
