@@ -3,15 +3,32 @@ import ssl
 from socket import SHUT_RDWR, IPPROTO_TCP, TCP_NODELAY
 from functools import cached_property
 from ssl import SSLContext, SSLSocket
+from threading import Thread
 
 from broker.context import BrokerContext
 from logger import log
 from servers.socket import SocketServer
+from servers.websocket.handler import WebsocketHandler
 from utils.stop_socket import stop_socket
+
+
+class SecureWebsocketHandler(WebsocketHandler):
+    sock: SSLSocket
+
+    def handshake(self):
+        log.debug("CLIENT", self.sock)
+        self.sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, True)
+        self.sock.settimeout(5)
+        self.sock.do_handshake()
+        super().start_threads()
+
+    def start_threads(self):
+        Thread(target=self.handshake, daemon=True).start()
 
 @dataclasses.dataclass
 class SecureSocketServer(SocketServer):
     ssl_context: SSLContext = None
+    handler_class = SecureWebsocketHandler
 
     @cached_property
     def base_socket(self):
@@ -28,13 +45,6 @@ class SecureSocketServer(SocketServer):
                 do_handshake_on_connect=False,
             )
         return self.base_socket
-
-    def handle_client(self, sock: SSLSocket):
-        log.debug("CLIENT", sock)
-        sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, True)
-        sock.settimeout(None)
-        sock.do_handshake()
-        super().handle_client(sock)
 
     def stop(self):
         self.alive = False

@@ -59,9 +59,6 @@ class WebsocketHandler(SocketHandler):
             )
             opcode = OP_CONTINUATION
 
-    # def set_keep_alive(self, seconds):
-    #     self.sock.settimeout(None)
-
     def start_connection(self):
         upgrade_request = recv_until(self.sock, delimiter="\r\n\r\n")
         handshake = self.get_handshake_response(upgrade_request)
