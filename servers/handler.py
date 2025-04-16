@@ -64,7 +64,6 @@ class Handler(Client, ReaderWriter):
     last_will: IncomingMessage
     alive: bool = True
     linked: bool = False
-    keep_alive: int = None
     connection_override: bool = False
 
     @cached_property
@@ -119,9 +118,6 @@ class Handler(Client, ReaderWriter):
     @abstractmethod
     def get_host_port_tuple(self) -> (str, int):
         pass
-
-    def set_keep_alive(self, seconds: Union[int, None]):
-        self.keep_alive = seconds
 
     @abstractmethod
     def close(self):
@@ -304,7 +300,7 @@ class Handler(Client, ReaderWriter):
     def handle_packet(self, packet):
         handler = self.packet_map.get(packet.__class__)
         if handler:
-            Thread(target=handler, args=[packet], daemon=True).start()
+            Thread(target=handler, args=[packet], daemon=False).start()
         elif isinstance(packet, PacketWithId) and self.packet_notify(packet):
             return
         else:
@@ -347,6 +343,10 @@ class Handler(Client, ReaderWriter):
             self.close()
             if self.linked:
                 self.handle_disconnected()
+
+    @abstractmethod
+    def set_keep_alive(self, keep_alive: int):
+        pass
 
     def read_next_packet(self):
         msg_type, flags = self.decode_header()

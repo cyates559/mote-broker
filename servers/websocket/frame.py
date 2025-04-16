@@ -1,6 +1,6 @@
 import dataclasses
 import errno
-from socket import socket
+from socket import socket, timeout
 from functools import cached_property
 
 from logger import log
@@ -78,40 +78,26 @@ class Frame:
         return bytes(result)
 
     @classmethod
-    def sock_recv_retry(cls, sock, length, error_count=0, timeout=None):
+    def recv(cls, sock: socket):
         try:
-            sock.settimeout(timeout)
-            return sock.recv(length)
-        except BlockingIOError:
-            log.debug("TIMEOUT", timeout)
-            log.traceback()
-            if error_count > 9:
-                raise
-            else:
-                return cls.sock_recv_retry(sock, length, error_count + 1, timeout)
-
-    @classmethod
-    def recv(cls, sock: socket, timeout=None):
-        try:
-            header = cls.sock_recv_retry(sock, length=2, timeout=timeout)
-            sock.settimeout(None)
+            header = sock.recv(2)
             fin = (header[0] & 128) == 128
             opcode = (header[0] & 15)
             masked = (header[1] & 128) == 128
             payload_len = (header[1] & 127)
             if payload_len == 126:
-                payload_len = int.from_bytes(cls.sock_recv_retry(sock, 2), 'big')
+                payload_len = int.from_bytes(sock.recv(2), 'big')
             elif payload_len == 127:
-                payload_len = int.from_bytes(cls.sock_recv_retry(sock, 8), 'big')
+                payload_len = int.from_bytes(sock.recv(8), 'big')
             if payload_len == 0:
                 payload = b""
                 if masked:
-                    cls.sock_recv_retry(sock, 4)
+                    sock.recv(4)
             elif masked:
-                data = cls.sock_recv_retry(sock, payload_len + 4)
+                data = sock.recv(payload_len + 4)
                 payload = cls.unmask(data[:4], data[4:])
             else:
-                payload = cls.sock_recv_retry(sock, payload_len)
+                payload = sock.recv(payload_len)
         except IndexError:
             sock.close()
             raise ConnectionError("Unable to read")

@@ -47,7 +47,6 @@ class SocketHandler(Handler):
         return self.sock.getsockname()
 
     def set_keep_alive(self, seconds):
-        super().set_keep_alive(seconds)
         self.sock.settimeout(seconds)
 
     def close(self):
@@ -115,4 +114,8 @@ class SocketServer(Server):
                     continue
             if not self.alive:
                 break
-            self.handle_client(client_socket)
+            try:
+                self.handle_client(client_socket)
+            except:
+                log.traceback()
+                continue

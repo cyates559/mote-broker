@@ -42,11 +42,11 @@ class Client:
 
     @cached_property
     def read_thread(self):
-        return Thread(target=self.read_loop, daemon=True)
+        return Thread(target=self.read_loop, daemon=False)
 
     @cached_property
     def write_thread(self):
-        return Thread(target=self.write_loop, daemon=True)
+        return Thread(target=self.write_loop, daemon=False)
 
     def start_threads(self):
         self.read_thread.start()
