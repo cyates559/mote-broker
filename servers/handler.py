@@ -300,7 +300,7 @@ class Handler(Client, ReaderWriter):
     def handle_packet(self, packet):
         handler = self.packet_map.get(packet.__class__)
         if handler:
-            Thread(target=handler, args=[packet], daemon=False).start()
+            Thread(target=handler, args=[packet], daemon=True).start()
         elif isinstance(packet, PacketWithId) and self.packet_notify(packet):
             return
         else:
