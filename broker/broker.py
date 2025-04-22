@@ -5,7 +5,6 @@ from functools import cached_property
 from threading import Lock
 
 from logger import log
-from servers.ssl import SecureSocketServer
 from tables.manager import TableManager
 from tree.manager import TreeManager
 from protocols.create_messages_for_subscriptions import create_messages_for_subscriptions
@@ -35,12 +34,12 @@ class Broker(BrokerContext):
 
     @cached_property
     def websocket_server(self):
-        return SecureSocketServer(
+        return SocketServer(
             name="WebSocket Server",
             host=self.ws_host or self.host,
             port=self.ws_port,
             handler_class=WebsocketHandler,
-            ssl_context=self.ssl_context,
+            # ssl_context=self.ssl_context,
         )
 
     @cached_property
