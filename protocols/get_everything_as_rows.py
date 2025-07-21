@@ -13,8 +13,9 @@ def get_everything_as_rows(
     result = []
     print("T", topic, data, tree)
     for key, val in tree.items():
-        if key == LEAF_KEY and not start:
-            result.append((topic, data, qos))
+        if key == LEAF_KEY:
+            if not start:
+                result.append((topic, data, qos))
         elif val is None:
             log.error("branch is null", topic, data)
         else:
