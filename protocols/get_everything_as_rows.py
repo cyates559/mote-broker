@@ -11,7 +11,6 @@ def get_everything_as_rows(
     covers an entire retained tree (or branch)
     """
     result = []
-    print("T", topic, data, tree)
     for key, val in tree.items():
         if key == LEAF_KEY:
             if not start:
