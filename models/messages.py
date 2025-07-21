@@ -46,7 +46,7 @@ class IncomingMessage:
     def from_raw_data(cls, raw_topic: str, data: bytes, qos: int, retain: bool):
         """
         The retain flag is part of the packet structure.
-        The graft flag is indicated with a trailing seperator on the topic.
+        The graft flag is indicated with a trailing separator on the topic.
         If the topic is for a table, the first node will contain the table flag and optionally an operator.
         """
         if retain:
