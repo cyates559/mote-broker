@@ -338,7 +338,7 @@ class Handler(Client, ReaderWriter):
                 self.handle_packet(packet)
         except: #(ConnectionError, UnexpectedPacketType) as x:
             ## if not isinstance(x, ConnectionError):
-            log.traceback()
+            log.traceback("Handler.read_loop", self.id)
             ##
             self.close()
             if self.linked:

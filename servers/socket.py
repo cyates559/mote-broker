@@ -99,8 +99,7 @@ class SocketServer(Server):
         try:
             self.server.bind((self.host, self.port))
         except OSError:
-            log.error("Unable to bind", self.host, self.port)
-            log.traceback()
+            log.traceback("Unable to bind", self.host, self.port)
             return
         self.server.listen()
         while self.alive:
@@ -110,12 +109,12 @@ class SocketServer(Server):
                 if not self.alive:
                     break
                 else:
-                    log.traceback()
+                    log.traceback("Could not accept client")
                     continue
             if not self.alive:
                 break
             try:
                 self.handle_client(client_socket)
             except:
-                log.traceback()
+                log.traceback("Could not initialize new client")
                 continue

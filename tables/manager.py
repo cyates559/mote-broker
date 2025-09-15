@@ -9,7 +9,7 @@ from backends.manager import ProcessManager
 from logger import log
 from models.messages import OutgoingMessage
 from models.topic import Topic
-from tables.exceptions import UnknownOperation, InvalidPayload
+from tables.exceptions import UnknownOperation
 
 operator_type = Callable[[Topic, any], None]
 
@@ -63,7 +63,7 @@ class TableWorker(ProcessWorker):
         try:
             return operator(topic, payload)
         except:
-            log.traceback()
+            log.traceback("Could not complete table operation:", full_topic)
             return False
 
     def query(self, topic: str) -> bytes:

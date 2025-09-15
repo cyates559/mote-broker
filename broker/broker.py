@@ -77,7 +77,7 @@ class Broker(BrokerContext):
                         try:
                             self.process_outgoing_rows(rows)
                         except:
-                            log.traceback()
+                            log.traceback("Broker.main_loop")
 
     def add_client(self, client: Client):
         prev_client = self.clients.get(client.id)
