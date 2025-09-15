@@ -5,6 +5,7 @@ from threading import Condition, Thread
 from typing import Type, Union
 
 from broker.context import BrokerContext as Broker
+from exceptions.connected_closed import ConnectionClosed
 from logger import log
 from models.client import Client
 from models.constants import TOPIC_SEP
@@ -336,10 +337,12 @@ class Handler(Client, ReaderWriter):
             while self.alive:
                 packet = self.read_next_packet()
                 self.handle_packet(packet)
+        except ConnectionClosed:
+            pass
         except: #(ConnectionError, UnexpectedPacketType) as x:
             ## if not isinstance(x, ConnectionError):
             log.traceback("Handler.read_loop", self.id)
-            ##
+        finally:
             self.close()
             if self.linked:
                 self.handle_disconnected()

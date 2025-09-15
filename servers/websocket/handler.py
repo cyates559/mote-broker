@@ -6,6 +6,7 @@ from io import BytesIO
 from socket import socket
 from typing import Optional
 
+from exceptions.connected_closed import ConnectionClosed
 from logger import log
 from servers.socket import SocketHandler
 from servers.websocket.frame import (
@@ -109,7 +110,7 @@ class WebsocketHandler(SocketHandler):
     def end_connection(self):
         self.alive = False
         self.sock.close()
-        raise ConnectionError
+        raise ConnectionClosed
 
     def close(self):
         if self.alive:
